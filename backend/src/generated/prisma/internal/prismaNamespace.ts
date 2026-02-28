@@ -917,6 +917,8 @@ export const ChallengeScalarFieldEnum = {
   targetValue: 'targetValue',
   comparisonOperator: 'comparisonOperator',
   constraints: 'constraints',
+  checklist: 'checklist',
+  threshold: 'threshold',
   repoUrl: 'repoUrl',
   issueUrl: 'issueUrl',
   status: 'status',
@@ -930,11 +932,13 @@ export const ProposalScalarFieldEnum = {
   id: 'id',
   challengeId: 'challengeId',
   engineerId: 'engineerId',
-  diagnosis: 'diagnosis',
-  approach: 'approach',
-  expectedImprovement: 'expectedImprovement',
-  score: 'score',
-  feedback: 'feedback',
+  proposalText: 'proposalText',
+  evaluation: 'evaluation',
+  ticked: 'ticked',
+  total: 'total',
+  percentage: 'percentage',
+  decision: 'decision',
+  reason: 'reason',
   status: 'status',
   createdAt: 'createdAt'
 } as const
@@ -1004,6 +1008,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

@@ -1,4 +1,4 @@
-import { Challenge } from "@/types/challenge.types";
+import type { Challenge } from "@/types/challenge.types";
 import { Link } from "react-router-dom";
 
 interface Props {
@@ -12,9 +12,7 @@ export default function ChallengeCard({ challenge }: Props) {
       className="block bg-slate-900 p-5 rounded-xl border border-slate-800 hover:border-slate-700 transition"
     >
       <div className="flex justify-between items-start">
-        <h2 className="text-lg font-semibold">
-          {challenge.title}
-        </h2>
+        <h2 className="text-lg font-semibold">{challenge.title}</h2>
 
         <span className="text-xs bg-slate-800 px-2 py-1 rounded">
           {challenge.difficulty}

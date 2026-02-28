@@ -1,7 +1,7 @@
 // src/context/AuthContext.tsx
 
 import { createContext, useEffect, useState } from "react";
-import { User } from "@/types/auth.types";
+import type { User } from "@/types/auth.types";
 import * as authApi from "@/api/auth.api";
 
 interface AuthContextType {
@@ -13,7 +13,7 @@ interface AuthContextType {
 }
 
 export const AuthContext = createContext<AuthContextType>(
-  {} as AuthContextType
+  {} as AuthContextType,
 );
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -37,10 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const loginUser = async (data: {
-    email: string;
-    password: string;
-  }) => {
+  const loginUser = async (data: { email: string; password: string }) => {
     const res = await authApi.login(data);
 
     localStorage.setItem("token", res.token);

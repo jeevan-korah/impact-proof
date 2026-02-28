@@ -23,7 +23,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/proposal",proposalRoutes);
+app.use("/api/proposal", proposalRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/challenges", challengeRoutes);
 app.use("/api/profile", profileRoutes);

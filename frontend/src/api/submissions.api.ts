@@ -1,8 +1,8 @@
 // src/api/submissions.api.ts
 
 import { api } from "@/lib/axios";
-import { ApiResponse } from "@/types/api.types";
-import { Submission } from "@/types/submission.types";
+import type { ApiResponse } from "@/types/api.types";
+import type { Submission } from "@/types/submission.types";
 
 export async function createSubmission(data: {
   challengeId: string;
@@ -16,9 +16,9 @@ export async function createSubmission(data: {
 }
 
 export async function getSubmissionById(id: string) {
-  const res = await api.get<
-    ApiResponse<{ submission: Submission }>
-  >(`/submissions/${id}`);
+  const res = await api.get<ApiResponse<{ submission: Submission }>>(
+    `/submissions/${id}`,
+  );
 
   return res.data.data.submission;
 }
@@ -40,9 +40,10 @@ export async function getSubmissionStatus(id: string) {
 }
 
 export async function getMySubmissions() {
-  const res = await api.get<
-    ApiResponse<{ submissions: Submission[] }>
-  >("/submissions/my");
+  const res =
+    await api.get<ApiResponse<{ submissions: Submission[] }>>(
+      "/submissions/my",
+    );
 
   return res.data.data.submissions;
 }

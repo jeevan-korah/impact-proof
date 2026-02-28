@@ -1,7 +1,7 @@
 // src/types/submission.types.ts
 
-import { Challenge } from "./challenge.types";
-import { Proposal } from "./proposal.types";
+import type { Challenge } from "./challenge.types";
+import type { Proposal } from "./proposal.types";
 
 export type SubmissionStatus = "pending" | "completed" | "flagged";
 

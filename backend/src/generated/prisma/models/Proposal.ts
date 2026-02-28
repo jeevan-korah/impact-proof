@@ -27,24 +27,27 @@ export type AggregateProposal = {
 }
 
 export type ProposalAvgAggregateOutputType = {
-  expectedImprovement: number | null
-  score: number | null
+  ticked: number | null
+  total: number | null
+  percentage: number | null
 }
 
 export type ProposalSumAggregateOutputType = {
-  expectedImprovement: number | null
-  score: number | null
+  ticked: number | null
+  total: number | null
+  percentage: number | null
 }
 
 export type ProposalMinAggregateOutputType = {
   id: string | null
   challengeId: string | null
   engineerId: string | null
-  diagnosis: string | null
-  approach: string | null
-  expectedImprovement: number | null
-  score: number | null
-  feedback: string | null
+  proposalText: string | null
+  ticked: number | null
+  total: number | null
+  percentage: number | null
+  decision: string | null
+  reason: string | null
   status: $Enums.ProposalStatus | null
   createdAt: Date | null
 }
@@ -53,11 +56,12 @@ export type ProposalMaxAggregateOutputType = {
   id: string | null
   challengeId: string | null
   engineerId: string | null
-  diagnosis: string | null
-  approach: string | null
-  expectedImprovement: number | null
-  score: number | null
-  feedback: string | null
+  proposalText: string | null
+  ticked: number | null
+  total: number | null
+  percentage: number | null
+  decision: string | null
+  reason: string | null
   status: $Enums.ProposalStatus | null
   createdAt: Date | null
 }
@@ -66,11 +70,13 @@ export type ProposalCountAggregateOutputType = {
   id: number
   challengeId: number
   engineerId: number
-  diagnosis: number
-  approach: number
-  expectedImprovement: number
-  score: number
-  feedback: number
+  proposalText: number
+  evaluation: number
+  ticked: number
+  total: number
+  percentage: number
+  decision: number
+  reason: number
   status: number
   createdAt: number
   _all: number
@@ -78,24 +84,27 @@ export type ProposalCountAggregateOutputType = {
 
 
 export type ProposalAvgAggregateInputType = {
-  expectedImprovement?: true
-  score?: true
+  ticked?: true
+  total?: true
+  percentage?: true
 }
 
 export type ProposalSumAggregateInputType = {
-  expectedImprovement?: true
-  score?: true
+  ticked?: true
+  total?: true
+  percentage?: true
 }
 
 export type ProposalMinAggregateInputType = {
   id?: true
   challengeId?: true
   engineerId?: true
-  diagnosis?: true
-  approach?: true
-  expectedImprovement?: true
-  score?: true
-  feedback?: true
+  proposalText?: true
+  ticked?: true
+  total?: true
+  percentage?: true
+  decision?: true
+  reason?: true
   status?: true
   createdAt?: true
 }
@@ -104,11 +113,12 @@ export type ProposalMaxAggregateInputType = {
   id?: true
   challengeId?: true
   engineerId?: true
-  diagnosis?: true
-  approach?: true
-  expectedImprovement?: true
-  score?: true
-  feedback?: true
+  proposalText?: true
+  ticked?: true
+  total?: true
+  percentage?: true
+  decision?: true
+  reason?: true
   status?: true
   createdAt?: true
 }
@@ -117,11 +127,13 @@ export type ProposalCountAggregateInputType = {
   id?: true
   challengeId?: true
   engineerId?: true
-  diagnosis?: true
-  approach?: true
-  expectedImprovement?: true
-  score?: true
-  feedback?: true
+  proposalText?: true
+  evaluation?: true
+  ticked?: true
+  total?: true
+  percentage?: true
+  decision?: true
+  reason?: true
   status?: true
   createdAt?: true
   _all?: true
@@ -217,11 +229,13 @@ export type ProposalGroupByOutputType = {
   id: string
   challengeId: string
   engineerId: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score: number | null
-  feedback: string | null
+  proposalText: string
+  evaluation: runtime.JsonValue | null
+  ticked: number | null
+  total: number | null
+  percentage: number | null
+  decision: string | null
+  reason: string | null
   status: $Enums.ProposalStatus
   createdAt: Date
   _count: ProposalCountAggregateOutputType | null
@@ -253,11 +267,13 @@ export type ProposalWhereInput = {
   id?: Prisma.StringFilter<"Proposal"> | string
   challengeId?: Prisma.StringFilter<"Proposal"> | string
   engineerId?: Prisma.StringFilter<"Proposal"> | string
-  diagnosis?: Prisma.StringFilter<"Proposal"> | string
-  approach?: Prisma.StringFilter<"Proposal"> | string
-  expectedImprovement?: Prisma.FloatFilter<"Proposal"> | number
-  score?: Prisma.IntNullableFilter<"Proposal"> | number | null
-  feedback?: Prisma.StringNullableFilter<"Proposal"> | string | null
+  proposalText?: Prisma.StringFilter<"Proposal"> | string
+  evaluation?: Prisma.JsonNullableFilter<"Proposal">
+  ticked?: Prisma.IntNullableFilter<"Proposal"> | number | null
+  total?: Prisma.IntNullableFilter<"Proposal"> | number | null
+  percentage?: Prisma.FloatNullableFilter<"Proposal"> | number | null
+  decision?: Prisma.StringNullableFilter<"Proposal"> | string | null
+  reason?: Prisma.StringNullableFilter<"Proposal"> | string | null
   status?: Prisma.EnumProposalStatusFilter<"Proposal"> | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFilter<"Proposal"> | Date | string
   challenge?: Prisma.XOR<Prisma.ChallengeScalarRelationFilter, Prisma.ChallengeWhereInput>
@@ -269,11 +285,13 @@ export type ProposalOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   challengeId?: Prisma.SortOrder
   engineerId?: Prisma.SortOrder
-  diagnosis?: Prisma.SortOrder
-  approach?: Prisma.SortOrder
-  expectedImprovement?: Prisma.SortOrder
-  score?: Prisma.SortOrderInput | Prisma.SortOrder
-  feedback?: Prisma.SortOrderInput | Prisma.SortOrder
+  proposalText?: Prisma.SortOrder
+  evaluation?: Prisma.SortOrderInput | Prisma.SortOrder
+  ticked?: Prisma.SortOrderInput | Prisma.SortOrder
+  total?: Prisma.SortOrderInput | Prisma.SortOrder
+  percentage?: Prisma.SortOrderInput | Prisma.SortOrder
+  decision?: Prisma.SortOrderInput | Prisma.SortOrder
+  reason?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   challenge?: Prisma.ChallengeOrderByWithRelationInput
@@ -289,11 +307,13 @@ export type ProposalWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ProposalWhereInput | Prisma.ProposalWhereInput[]
   challengeId?: Prisma.StringFilter<"Proposal"> | string
   engineerId?: Prisma.StringFilter<"Proposal"> | string
-  diagnosis?: Prisma.StringFilter<"Proposal"> | string
-  approach?: Prisma.StringFilter<"Proposal"> | string
-  expectedImprovement?: Prisma.FloatFilter<"Proposal"> | number
-  score?: Prisma.IntNullableFilter<"Proposal"> | number | null
-  feedback?: Prisma.StringNullableFilter<"Proposal"> | string | null
+  proposalText?: Prisma.StringFilter<"Proposal"> | string
+  evaluation?: Prisma.JsonNullableFilter<"Proposal">
+  ticked?: Prisma.IntNullableFilter<"Proposal"> | number | null
+  total?: Prisma.IntNullableFilter<"Proposal"> | number | null
+  percentage?: Prisma.FloatNullableFilter<"Proposal"> | number | null
+  decision?: Prisma.StringNullableFilter<"Proposal"> | string | null
+  reason?: Prisma.StringNullableFilter<"Proposal"> | string | null
   status?: Prisma.EnumProposalStatusFilter<"Proposal"> | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFilter<"Proposal"> | Date | string
   challenge?: Prisma.XOR<Prisma.ChallengeScalarRelationFilter, Prisma.ChallengeWhereInput>
@@ -305,11 +325,13 @@ export type ProposalOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   challengeId?: Prisma.SortOrder
   engineerId?: Prisma.SortOrder
-  diagnosis?: Prisma.SortOrder
-  approach?: Prisma.SortOrder
-  expectedImprovement?: Prisma.SortOrder
-  score?: Prisma.SortOrderInput | Prisma.SortOrder
-  feedback?: Prisma.SortOrderInput | Prisma.SortOrder
+  proposalText?: Prisma.SortOrder
+  evaluation?: Prisma.SortOrderInput | Prisma.SortOrder
+  ticked?: Prisma.SortOrderInput | Prisma.SortOrder
+  total?: Prisma.SortOrderInput | Prisma.SortOrder
+  percentage?: Prisma.SortOrderInput | Prisma.SortOrder
+  decision?: Prisma.SortOrderInput | Prisma.SortOrder
+  reason?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ProposalCountOrderByAggregateInput
@@ -326,22 +348,26 @@ export type ProposalScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Proposal"> | string
   challengeId?: Prisma.StringWithAggregatesFilter<"Proposal"> | string
   engineerId?: Prisma.StringWithAggregatesFilter<"Proposal"> | string
-  diagnosis?: Prisma.StringWithAggregatesFilter<"Proposal"> | string
-  approach?: Prisma.StringWithAggregatesFilter<"Proposal"> | string
-  expectedImprovement?: Prisma.FloatWithAggregatesFilter<"Proposal"> | number
-  score?: Prisma.IntNullableWithAggregatesFilter<"Proposal"> | number | null
-  feedback?: Prisma.StringNullableWithAggregatesFilter<"Proposal"> | string | null
+  proposalText?: Prisma.StringWithAggregatesFilter<"Proposal"> | string
+  evaluation?: Prisma.JsonNullableWithAggregatesFilter<"Proposal">
+  ticked?: Prisma.IntNullableWithAggregatesFilter<"Proposal"> | number | null
+  total?: Prisma.IntNullableWithAggregatesFilter<"Proposal"> | number | null
+  percentage?: Prisma.FloatNullableWithAggregatesFilter<"Proposal"> | number | null
+  decision?: Prisma.StringNullableWithAggregatesFilter<"Proposal"> | string | null
+  reason?: Prisma.StringNullableWithAggregatesFilter<"Proposal"> | string | null
   status?: Prisma.EnumProposalStatusWithAggregatesFilter<"Proposal"> | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Proposal"> | Date | string
 }
 
 export type ProposalCreateInput = {
   id?: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
   challenge: Prisma.ChallengeCreateNestedOneWithoutProposalsInput
@@ -353,11 +379,13 @@ export type ProposalUncheckedCreateInput = {
   id?: string
   challengeId: string
   engineerId: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
   submission?: Prisma.SubmissionUncheckedCreateNestedOneWithoutProposalInput
@@ -365,11 +393,13 @@ export type ProposalUncheckedCreateInput = {
 
 export type ProposalUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   challenge?: Prisma.ChallengeUpdateOneRequiredWithoutProposalsNestedInput
@@ -381,11 +411,13 @@ export type ProposalUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   challengeId?: Prisma.StringFieldUpdateOperationsInput | string
   engineerId?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submission?: Prisma.SubmissionUncheckedUpdateOneWithoutProposalNestedInput
@@ -395,22 +427,26 @@ export type ProposalCreateManyInput = {
   id?: string
   challengeId: string
   engineerId: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
 }
 
 export type ProposalUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -419,11 +455,13 @@ export type ProposalUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   challengeId?: Prisma.StringFieldUpdateOperationsInput | string
   engineerId?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -447,29 +485,33 @@ export type ProposalCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   challengeId?: Prisma.SortOrder
   engineerId?: Prisma.SortOrder
-  diagnosis?: Prisma.SortOrder
-  approach?: Prisma.SortOrder
-  expectedImprovement?: Prisma.SortOrder
-  score?: Prisma.SortOrder
-  feedback?: Prisma.SortOrder
+  proposalText?: Prisma.SortOrder
+  evaluation?: Prisma.SortOrder
+  ticked?: Prisma.SortOrder
+  total?: Prisma.SortOrder
+  percentage?: Prisma.SortOrder
+  decision?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ProposalAvgOrderByAggregateInput = {
-  expectedImprovement?: Prisma.SortOrder
-  score?: Prisma.SortOrder
+  ticked?: Prisma.SortOrder
+  total?: Prisma.SortOrder
+  percentage?: Prisma.SortOrder
 }
 
 export type ProposalMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   challengeId?: Prisma.SortOrder
   engineerId?: Prisma.SortOrder
-  diagnosis?: Prisma.SortOrder
-  approach?: Prisma.SortOrder
-  expectedImprovement?: Prisma.SortOrder
-  score?: Prisma.SortOrder
-  feedback?: Prisma.SortOrder
+  proposalText?: Prisma.SortOrder
+  ticked?: Prisma.SortOrder
+  total?: Prisma.SortOrder
+  percentage?: Prisma.SortOrder
+  decision?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -478,18 +520,20 @@ export type ProposalMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   challengeId?: Prisma.SortOrder
   engineerId?: Prisma.SortOrder
-  diagnosis?: Prisma.SortOrder
-  approach?: Prisma.SortOrder
-  expectedImprovement?: Prisma.SortOrder
-  score?: Prisma.SortOrder
-  feedback?: Prisma.SortOrder
+  proposalText?: Prisma.SortOrder
+  ticked?: Prisma.SortOrder
+  total?: Prisma.SortOrder
+  percentage?: Prisma.SortOrder
+  decision?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ProposalSumOrderByAggregateInput = {
-  expectedImprovement?: Prisma.SortOrder
-  score?: Prisma.SortOrder
+  ticked?: Prisma.SortOrder
+  total?: Prisma.SortOrder
+  percentage?: Prisma.SortOrder
 }
 
 export type ProposalScalarRelationFilter = {
@@ -589,6 +633,14 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableFloatFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type EnumProposalStatusFieldUpdateOperationsInput = {
   set?: $Enums.ProposalStatus
 }
@@ -609,11 +661,13 @@ export type ProposalUpdateOneRequiredWithoutSubmissionNestedInput = {
 
 export type ProposalCreateWithoutEngineerInput = {
   id?: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
   challenge: Prisma.ChallengeCreateNestedOneWithoutProposalsInput
@@ -623,11 +677,13 @@ export type ProposalCreateWithoutEngineerInput = {
 export type ProposalUncheckedCreateWithoutEngineerInput = {
   id?: string
   challengeId: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
   submission?: Prisma.SubmissionUncheckedCreateNestedOneWithoutProposalInput
@@ -666,22 +722,26 @@ export type ProposalScalarWhereInput = {
   id?: Prisma.StringFilter<"Proposal"> | string
   challengeId?: Prisma.StringFilter<"Proposal"> | string
   engineerId?: Prisma.StringFilter<"Proposal"> | string
-  diagnosis?: Prisma.StringFilter<"Proposal"> | string
-  approach?: Prisma.StringFilter<"Proposal"> | string
-  expectedImprovement?: Prisma.FloatFilter<"Proposal"> | number
-  score?: Prisma.IntNullableFilter<"Proposal"> | number | null
-  feedback?: Prisma.StringNullableFilter<"Proposal"> | string | null
+  proposalText?: Prisma.StringFilter<"Proposal"> | string
+  evaluation?: Prisma.JsonNullableFilter<"Proposal">
+  ticked?: Prisma.IntNullableFilter<"Proposal"> | number | null
+  total?: Prisma.IntNullableFilter<"Proposal"> | number | null
+  percentage?: Prisma.FloatNullableFilter<"Proposal"> | number | null
+  decision?: Prisma.StringNullableFilter<"Proposal"> | string | null
+  reason?: Prisma.StringNullableFilter<"Proposal"> | string | null
   status?: Prisma.EnumProposalStatusFilter<"Proposal"> | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFilter<"Proposal"> | Date | string
 }
 
 export type ProposalCreateWithoutChallengeInput = {
   id?: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
   engineer: Prisma.UserCreateNestedOneWithoutProposalsInput
@@ -691,11 +751,13 @@ export type ProposalCreateWithoutChallengeInput = {
 export type ProposalUncheckedCreateWithoutChallengeInput = {
   id?: string
   engineerId: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
   submission?: Prisma.SubmissionUncheckedCreateNestedOneWithoutProposalInput
@@ -729,11 +791,13 @@ export type ProposalUpdateManyWithWhereWithoutChallengeInput = {
 
 export type ProposalCreateWithoutSubmissionInput = {
   id?: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
   challenge: Prisma.ChallengeCreateNestedOneWithoutProposalsInput
@@ -744,11 +808,13 @@ export type ProposalUncheckedCreateWithoutSubmissionInput = {
   id?: string
   challengeId: string
   engineerId: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
 }
@@ -771,11 +837,13 @@ export type ProposalUpdateToOneWithWhereWithoutSubmissionInput = {
 
 export type ProposalUpdateWithoutSubmissionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   challenge?: Prisma.ChallengeUpdateOneRequiredWithoutProposalsNestedInput
@@ -786,11 +854,13 @@ export type ProposalUncheckedUpdateWithoutSubmissionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   challengeId?: Prisma.StringFieldUpdateOperationsInput | string
   engineerId?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -798,22 +868,26 @@ export type ProposalUncheckedUpdateWithoutSubmissionInput = {
 export type ProposalCreateManyEngineerInput = {
   id?: string
   challengeId: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
 }
 
 export type ProposalUpdateWithoutEngineerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   challenge?: Prisma.ChallengeUpdateOneRequiredWithoutProposalsNestedInput
@@ -823,11 +897,13 @@ export type ProposalUpdateWithoutEngineerInput = {
 export type ProposalUncheckedUpdateWithoutEngineerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   challengeId?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submission?: Prisma.SubmissionUncheckedUpdateOneWithoutProposalNestedInput
@@ -836,11 +912,13 @@ export type ProposalUncheckedUpdateWithoutEngineerInput = {
 export type ProposalUncheckedUpdateManyWithoutEngineerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   challengeId?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -848,22 +926,26 @@ export type ProposalUncheckedUpdateManyWithoutEngineerInput = {
 export type ProposalCreateManyChallengeInput = {
   id?: string
   engineerId: string
-  diagnosis: string
-  approach: string
-  expectedImprovement: number
-  score?: number | null
-  feedback?: string | null
+  proposalText: string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: number | null
+  total?: number | null
+  percentage?: number | null
+  decision?: string | null
+  reason?: string | null
   status?: $Enums.ProposalStatus
   createdAt?: Date | string
 }
 
 export type ProposalUpdateWithoutChallengeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   engineer?: Prisma.UserUpdateOneRequiredWithoutProposalsNestedInput
@@ -873,11 +955,13 @@ export type ProposalUpdateWithoutChallengeInput = {
 export type ProposalUncheckedUpdateWithoutChallengeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   engineerId?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   submission?: Prisma.SubmissionUncheckedUpdateOneWithoutProposalNestedInput
@@ -886,11 +970,13 @@ export type ProposalUncheckedUpdateWithoutChallengeInput = {
 export type ProposalUncheckedUpdateManyWithoutChallengeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   engineerId?: Prisma.StringFieldUpdateOperationsInput | string
-  diagnosis?: Prisma.StringFieldUpdateOperationsInput | string
-  approach?: Prisma.StringFieldUpdateOperationsInput | string
-  expectedImprovement?: Prisma.FloatFieldUpdateOperationsInput | number
-  score?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  proposalText?: Prisma.StringFieldUpdateOperationsInput | string
+  evaluation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ticked?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  total?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  percentage?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  decision?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -901,11 +987,13 @@ export type ProposalSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   id?: boolean
   challengeId?: boolean
   engineerId?: boolean
-  diagnosis?: boolean
-  approach?: boolean
-  expectedImprovement?: boolean
-  score?: boolean
-  feedback?: boolean
+  proposalText?: boolean
+  evaluation?: boolean
+  ticked?: boolean
+  total?: boolean
+  percentage?: boolean
+  decision?: boolean
+  reason?: boolean
   status?: boolean
   createdAt?: boolean
   challenge?: boolean | Prisma.ChallengeDefaultArgs<ExtArgs>
@@ -917,11 +1005,13 @@ export type ProposalSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   challengeId?: boolean
   engineerId?: boolean
-  diagnosis?: boolean
-  approach?: boolean
-  expectedImprovement?: boolean
-  score?: boolean
-  feedback?: boolean
+  proposalText?: boolean
+  evaluation?: boolean
+  ticked?: boolean
+  total?: boolean
+  percentage?: boolean
+  decision?: boolean
+  reason?: boolean
   status?: boolean
   createdAt?: boolean
   challenge?: boolean | Prisma.ChallengeDefaultArgs<ExtArgs>
@@ -932,11 +1022,13 @@ export type ProposalSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   challengeId?: boolean
   engineerId?: boolean
-  diagnosis?: boolean
-  approach?: boolean
-  expectedImprovement?: boolean
-  score?: boolean
-  feedback?: boolean
+  proposalText?: boolean
+  evaluation?: boolean
+  ticked?: boolean
+  total?: boolean
+  percentage?: boolean
+  decision?: boolean
+  reason?: boolean
   status?: boolean
   createdAt?: boolean
   challenge?: boolean | Prisma.ChallengeDefaultArgs<ExtArgs>
@@ -947,16 +1039,18 @@ export type ProposalSelectScalar = {
   id?: boolean
   challengeId?: boolean
   engineerId?: boolean
-  diagnosis?: boolean
-  approach?: boolean
-  expectedImprovement?: boolean
-  score?: boolean
-  feedback?: boolean
+  proposalText?: boolean
+  evaluation?: boolean
+  ticked?: boolean
+  total?: boolean
+  percentage?: boolean
+  decision?: boolean
+  reason?: boolean
   status?: boolean
   createdAt?: boolean
 }
 
-export type ProposalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "challengeId" | "engineerId" | "diagnosis" | "approach" | "expectedImprovement" | "score" | "feedback" | "status" | "createdAt", ExtArgs["result"]["proposal"]>
+export type ProposalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "challengeId" | "engineerId" | "proposalText" | "evaluation" | "ticked" | "total" | "percentage" | "decision" | "reason" | "status" | "createdAt", ExtArgs["result"]["proposal"]>
 export type ProposalInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   challenge?: boolean | Prisma.ChallengeDefaultArgs<ExtArgs>
   engineer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -982,11 +1076,13 @@ export type $ProposalPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     id: string
     challengeId: string
     engineerId: string
-    diagnosis: string
-    approach: string
-    expectedImprovement: number
-    score: number | null
-    feedback: string | null
+    proposalText: string
+    evaluation: runtime.JsonValue | null
+    ticked: number | null
+    total: number | null
+    percentage: number | null
+    decision: string | null
+    reason: string | null
     status: $Enums.ProposalStatus
     createdAt: Date
   }, ExtArgs["result"]["proposal"]>
@@ -1418,11 +1514,13 @@ export interface ProposalFieldRefs {
   readonly id: Prisma.FieldRef<"Proposal", 'String'>
   readonly challengeId: Prisma.FieldRef<"Proposal", 'String'>
   readonly engineerId: Prisma.FieldRef<"Proposal", 'String'>
-  readonly diagnosis: Prisma.FieldRef<"Proposal", 'String'>
-  readonly approach: Prisma.FieldRef<"Proposal", 'String'>
-  readonly expectedImprovement: Prisma.FieldRef<"Proposal", 'Float'>
-  readonly score: Prisma.FieldRef<"Proposal", 'Int'>
-  readonly feedback: Prisma.FieldRef<"Proposal", 'String'>
+  readonly proposalText: Prisma.FieldRef<"Proposal", 'String'>
+  readonly evaluation: Prisma.FieldRef<"Proposal", 'Json'>
+  readonly ticked: Prisma.FieldRef<"Proposal", 'Int'>
+  readonly total: Prisma.FieldRef<"Proposal", 'Int'>
+  readonly percentage: Prisma.FieldRef<"Proposal", 'Float'>
+  readonly decision: Prisma.FieldRef<"Proposal", 'String'>
+  readonly reason: Prisma.FieldRef<"Proposal", 'String'>
   readonly status: Prisma.FieldRef<"Proposal", 'ProposalStatus'>
   readonly createdAt: Prisma.FieldRef<"Proposal", 'DateTime'>
 }

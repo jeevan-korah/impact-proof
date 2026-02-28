@@ -1,7 +1,7 @@
 // src/types/profile.types.ts
 
-import { ImpactRecord } from "./submission.types";
-import { Vertical, Difficulty } from "./challenge.types";
+import type { ImpactRecord } from "./submission.types";
+import type { Vertical, Difficulty } from "./challenge.types";
 
 export interface EngineerProfile {
   engineerId: string;

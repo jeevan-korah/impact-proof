@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthForm from "../components/AuthForm";
+import AuthForm from "../components/Authform";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginPage() {
@@ -21,7 +21,13 @@ export default function LoginPage() {
 
       navigate("/dashboard");
     } catch (err: any) {
-      setError("Invalid email or password");
+      console.error("Login error:", err);
+      const errorMsg = 
+        err?.response?.data?.message || 
+        err?.response?.data?.error || 
+        err?.message || 
+        "Invalid email or password";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

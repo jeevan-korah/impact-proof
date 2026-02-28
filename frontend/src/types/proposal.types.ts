@@ -1,8 +1,8 @@
 // src/types/proposal.types.ts
 
-import { Challenge } from "./challenge.types";
-import { Submission } from "./submission.types";
-import { User } from "./auth.types";
+import type { Challenge } from "./challenge.types";
+import type { Submission } from "./submission.types";
+import type { User } from "./auth.types";
 
 export type ProposalStatus = "pending" | "shortlisted" | "rejected";
 

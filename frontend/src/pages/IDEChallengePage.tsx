@@ -1,3 +1,4 @@
+import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getChallengeById } from "@/api/challenges.api";
@@ -205,7 +206,7 @@ export default function MetricCard({ label, value, target }) {
 ];
 
 // Syntax highlighting (simplified token-based)
-function highlightCode(code: string, language: string): JSX.Element[] {
+function highlightCode(code: string, language: string): React.JSX.Element[] {
   const lines = code.split("\n");
   return lines.map((line, i) => (
     <div key={i} className="flex">
@@ -425,7 +426,9 @@ export default function IDEChallengePage() {
       );
     } catch (err: any) {
       setSubmitMsg(
-        err?.response?.data?.message || err?.response?.data?.error || "Failed to submit proposal",
+        err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          "Failed to submit proposal",
       );
     } finally {
       setSubmitting(false);
@@ -446,9 +449,7 @@ export default function IDEChallengePage() {
         `Submission received (ID: ${result.submissionId}) — pipeline is running.`,
       );
     } catch (err: any) {
-      setSubmitMsg(
-        err?.response?.data?.message || "Failed to submit solution",
-      );
+      setSubmitMsg(err?.response?.data?.message || "Failed to submit solution");
     } finally {
       setSubmitting(false);
     }
@@ -943,8 +944,8 @@ export default function IDEChallengePage() {
               </h3>
               {challenge && (
                 <div className="text-xs text-gray-500 mb-2">
-                  Checklist: {(challenge.checklist as string[])?.length ?? 0} items
-                  &bull; Threshold: {challenge.threshold}%
+                  Checklist: {(challenge.checklist as string[])?.length ?? 0}{" "}
+                  items &bull; Threshold: {challenge.threshold}%
                 </div>
               )}
               <textarea
@@ -962,14 +963,16 @@ export default function IDEChallengePage() {
               </button>
 
               {proposalResult && (
-                <div className={`mt-3 p-3 rounded-lg border text-xs ${
-                  proposalResult.decision === "APPROVED"
-                    ? "bg-accent/10 border-accent/30 text-accent"
-                    : "bg-red-500/10 border-red-500/30 text-red-400"
-                }`}>
+                <div
+                  className={`mt-3 p-3 rounded-lg border text-xs ${
+                    proposalResult.decision === "APPROVED"
+                      ? "bg-accent/10 border-accent/30 text-accent"
+                      : "bg-red-500/10 border-red-500/30 text-red-400"
+                  }`}
+                >
                   <div className="font-semibold mb-1">
-                    {proposalResult.decision} — {proposalResult.percentage}%
-                    ({proposalResult.ticked}/{proposalResult.total})
+                    {proposalResult.decision} — {proposalResult.percentage}% (
+                    {proposalResult.ticked}/{proposalResult.total})
                   </div>
                   <div>{proposalResult.reason}</div>
                 </div>

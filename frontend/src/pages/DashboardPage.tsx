@@ -2,7 +2,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { getChallenges } from "@/api/challenges.api";
-import type { Challenge, Vertical as BackendVertical } from "@/types/challenge.types";
+import type {
+  Challenge,
+  Vertical as BackendVertical,
+} from "@/types/challenge.types";
+import Navbar from "@/components/common/Navbar";
 
 type Vertical = "ai_ml" | "frontend" | "backend" | "fullstack" | "ml";
 type Difficulty = "easy" | "medium" | "hard";
@@ -243,56 +247,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-surface">
       {/* Header */}
-      <header className="border-b border-surface-border px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-accent rounded flex items-center justify-center">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.5"
-            >
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-          </div>
-          <span className="text-lg font-semibold text-white tracking-tight">
-            ImpactProof
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          {user ? (
-            <>
-              <span className="text-sm text-gray-400">{user.name}</span>
-              <button
-                onClick={logout}
-                className="text-sm text-gray-500 hover:text-white transition-colors"
-              >
-                Logout
-              </button>
-              <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-sm text-accent font-medium">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-              >
-                Login
-              </Link>
-              <Link
-                to="/register"
-                className="px-3 py-1.5 text-sm bg-accent hover:bg-accent-dim text-white rounded-md font-medium transition-colors"
-              >
-                Register
-              </Link>
-            </>
-          )}
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main content */}
       <main className="max-w-6xl mx-auto px-6 py-8">

@@ -135,11 +135,13 @@ export default function MLChallengePage() {
             <div className="grid grid-cols-2 gap-6">
               {/* Proposal */}
               <div>
-                <h3 className="text-sm font-semibold text-white mb-2">Submit Proposal</h3>
+                <h3 className="text-sm font-semibold text-white mb-2">
+                  Submit Proposal
+                </h3>
                 {challenge && (
                   <p className="text-xs text-gray-500 mb-2">
-                    Checklist: {(challenge.checklist as string[])?.length ?? 0} items
-                    &bull; Threshold: {challenge.threshold}%
+                    Checklist: {(challenge.checklist as string[])?.length ?? 0}{" "}
+                    items &bull; Threshold: {challenge.threshold}%
                   </p>
                 )}
                 <textarea
@@ -154,7 +156,10 @@ export default function MLChallengePage() {
                     setSubmitting(true);
                     setSubmitMsg(null);
                     try {
-                      const result = await createProposal({ challengeId: id, proposalText: proposalText.trim() });
+                      const result = await createProposal({
+                        challengeId: id,
+                        proposalText: proposalText.trim(),
+                      });
                       setProposalResult(result);
                       setSubmitMsg(
                         result.decision === "APPROVED"
@@ -162,7 +167,11 @@ export default function MLChallengePage() {
                           : `Proposal REJECTED (${result.percentage}%) — ${result.reason}`,
                       );
                     } catch (err: any) {
-                      setSubmitMsg(err?.response?.data?.message || err?.response?.data?.error || "Failed to submit proposal");
+                      setSubmitMsg(
+                        err?.response?.data?.message ||
+                          err?.response?.data?.error ||
+                          "Failed to submit proposal",
+                      );
                     } finally {
                       setSubmitting(false);
                     }
@@ -173,18 +182,27 @@ export default function MLChallengePage() {
                   {submitting ? "Evaluating..." : "Submit Proposal"}
                 </button>
                 {proposalResult && (
-                  <div className={`mt-3 p-3 rounded-lg border text-xs ${proposalResult.decision === "APPROVED" ? "bg-accent/10 border-accent/30 text-accent" : "bg-red-500/10 border-red-500/30 text-red-400"}`}>
-                    <div className="font-semibold mb-1">{proposalResult.decision} — {proposalResult.percentage}% ({proposalResult.ticked}/{proposalResult.total})</div>
+                  <div
+                    className={`mt-3 p-3 rounded-lg border text-xs ${proposalResult.decision === "APPROVED" ? "bg-accent/10 border-accent/30 text-accent" : "bg-red-500/10 border-red-500/30 text-red-400"}`}
+                  >
+                    <div className="font-semibold mb-1">
+                      {proposalResult.decision} — {proposalResult.percentage}% (
+                      {proposalResult.ticked}/{proposalResult.total})
+                    </div>
                     <div>{proposalResult.reason}</div>
                   </div>
                 )}
               </div>
               {/* Solution */}
               <div>
-                <h3 className="text-sm font-semibold text-white mb-2">Submit Solution Repo</h3>
+                <h3 className="text-sm font-semibold text-white mb-2">
+                  Submit Solution Repo
+                </h3>
                 <p className="text-xs text-gray-500 mb-2">
                   Your proposal must be approved before you can submit.
-                  {engineerProgress?.status === "shortlisted" && <span className="text-accent ml-1">✓ Approved</span>}
+                  {engineerProgress?.status === "shortlisted" && (
+                    <span className="text-accent ml-1">✓ Approved</span>
+                  )}
                 </p>
                 <input
                   type="text"
@@ -199,10 +217,18 @@ export default function MLChallengePage() {
                     setSubmitting(true);
                     setSubmitMsg(null);
                     try {
-                      const result = await createSubmission({ challengeId: id, repoUrl: repoUrl.trim() });
-                      setSubmitMsg(`Submission received (ID: ${result.submissionId}) — pipeline running.`);
+                      const result = await createSubmission({
+                        challengeId: id,
+                        repoUrl: repoUrl.trim(),
+                      });
+                      setSubmitMsg(
+                        `Submission received (ID: ${result.submissionId}) — pipeline running.`,
+                      );
                     } catch (err: any) {
-                      setSubmitMsg(err?.response?.data?.message || "Failed to submit solution");
+                      setSubmitMsg(
+                        err?.response?.data?.message ||
+                          "Failed to submit solution",
+                      );
                     } finally {
                       setSubmitting(false);
                     }
@@ -213,7 +239,9 @@ export default function MLChallengePage() {
                   {submitting ? "Submitting..." : "Submit Repository"}
                 </button>
                 {submitMsg && (
-                  <div className="mt-3 p-3 rounded-lg bg-surface border border-surface-border text-xs text-gray-300">{submitMsg}</div>
+                  <div className="mt-3 p-3 rounded-lg bg-surface border border-surface-border text-xs text-gray-300">
+                    {submitMsg}
+                  </div>
                 )}
               </div>
             </div>
@@ -467,8 +495,14 @@ export default function MLChallengePage() {
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-gray-600">0%</span>
                     <div className="relative flex-1 mx-2">
-                      <div className={`absolute -top-1 w-px h-3 bg-gray-600`} style={{ right: `${100 - targetValue}%` }} />
-                      <span className={`absolute top-3 text-[10px] text-gray-500 -translate-x-1/2`} style={{ right: `${100 - targetValue}%` }}>
+                      <div
+                        className={`absolute -top-1 w-px h-3 bg-gray-600`}
+                        style={{ right: `${100 - targetValue}%` }}
+                      />
+                      <span
+                        className={`absolute top-3 text-[10px] text-gray-500 -translate-x-1/2`}
+                        style={{ right: `${100 - targetValue}%` }}
+                      >
                         Target
                       </span>
                     </div>
@@ -478,7 +512,9 @@ export default function MLChallengePage() {
 
                 <div className="flex items-center justify-between py-2 border-t border-surface-border">
                   <span className="text-sm text-gray-400">Target:</span>
-                  <span className="text-sm text-white font-medium">{targetValue}%</span>
+                  <span className="text-sm text-white font-medium">
+                    {targetValue}%
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between py-2 border-t border-surface-border">

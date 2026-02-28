@@ -1,6 +1,6 @@
 // src/types/challenge.types.ts
 
-import { User } from "./auth.types";
+import type { User } from "./auth.types";
 
 export type Vertical = "frontend" | "backend" | "ml";
 export type Difficulty = "easy" | "medium" | "hard";

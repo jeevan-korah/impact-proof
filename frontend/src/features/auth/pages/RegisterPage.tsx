@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthForm from "../components/AuthForm";
+import AuthForm from "../components/Authform";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function RegisterPage() {
@@ -21,7 +21,13 @@ export default function RegisterPage() {
 
       navigate("/dashboard");
     } catch (err: any) {
-      setError("Registration failed");
+      console.error("Registration error:", err);
+      const errorMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Registration failed. Please try again.";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

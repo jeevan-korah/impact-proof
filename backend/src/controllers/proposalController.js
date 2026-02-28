@@ -3,7 +3,7 @@ import { prisma } from "../lib/prisma.js";
 
 // ── POST / — Engineer only (enforced at route level) ─────────────────────
 export async function evaluate(req, res) {
-  const engineerId = req.user.userId;  
+  const engineerId = req.user.userId;
   const { challengeId, proposalText } = req.body;
 
   if (!proposalText) {
@@ -18,10 +18,10 @@ export async function evaluate(req, res) {
     const challenge = await prisma.challenge.findUnique({
       where: { id: challengeId },
       select: {
-        id:        true,
+        id: true,
         checklist: true,
         threshold: true,
-        status:    true,
+        status: true,
       },
     });
 
@@ -30,7 +30,9 @@ export async function evaluate(req, res) {
     }
 
     if (challenge.status !== "open") {
-      return res.status(400).json({ error: "This challenge is no longer open" });
+      return res
+        .status(400)
+        .json({ error: "This challenge is no longer open" });
     }
 
     // 2. Prevent duplicate proposals — one per engineer per challenge
@@ -44,7 +46,11 @@ export async function evaluate(req, res) {
     });
 
     if (existing) {
-      return res.status(409).json({ error: "You have already submitted a proposal for this challenge" });
+      return res
+        .status(409)
+        .json({
+          error: "You have already submitted a proposal for this challenge",
+        });
     }
 
     // 3. Run evaluation via Ollama using company's checklist + threshold
@@ -64,13 +70,13 @@ export async function evaluate(req, res) {
         challengeId,
         engineerId,
         proposalText,
-        evaluation:  result.evaluation,
-        ticked:      result.ticked,
-        total:       result.total,
-        percentage:  result.percentage,
-        decision:    result.decision,
-        reason:      result.reason,
-        status:      result.decision === "APPROVED" ? "shortlisted" : "rejected",
+        evaluation: result.evaluation,
+        ticked: result.ticked,
+        total: result.total,
+        percentage: result.percentage,
+        decision: result.decision,
+        reason: result.reason,
+        status: result.decision === "APPROVED" ? "shortlisted" : "rejected",
       },
     });
 
@@ -79,20 +85,20 @@ export async function evaluate(req, res) {
       success: true,
       message: "proposal evaluated",
       data: {
-        proposalId:  proposal.id,
-        evaluation:  result.evaluation,
-        ticked:      result.ticked,
-        total:       result.total,
-        percentage:  result.percentage,
-        decision:    result.decision,
-        reason:      result.reason,
-        status:      proposal.status,
+        proposalId: proposal.id,
+        evaluation: result.evaluation,
+        ticked: result.ticked,
+        total: result.total,
+        percentage: result.percentage,
+        decision: result.decision,
+        reason: result.reason,
+        status: proposal.status,
       },
     });
   } catch (error) {
     console.error("createProposal error:", error);
     return res.status(500).json({
-      error:   "Something went wrong. Please try again.",
+      error: "Something went wrong. Please try again.",
       details: error.message,
     });
   }
@@ -100,16 +106,16 @@ export async function evaluate(req, res) {
 
 // ── GET /my ───────────────────────────────────────────────────────────────
 export async function getMyProposals(req, res) {
-  const engineerId = req.user.userId;  // ✅ fixed
+  const engineerId = req.user.userId; // ✅ fixed
   try {
     const proposals = await prisma.proposal.findMany({
       where: { engineerId },
       orderBy: { createdAt: "desc" },
       include: {
         challenge: {
-          select: { id: true, title: true, threshold: true, checklist: true }
-        }
-      }
+          select: { id: true, title: true, threshold: true, checklist: true },
+        },
+      },
     });
     return res.status(200).json({ success: true, data: { proposals } });
   } catch (error) {
@@ -125,11 +131,14 @@ export async function getProposalById(req, res) {
       where: { id },
       include: {
         challenge: {
-          select: { id: true, title: true, threshold: true, checklist: true }
-        }
-      }
+          select: { id: true, title: true, threshold: true, checklist: true },
+        },
+      },
     });
-    if (!proposal) return res.status(404).json({ success: false, message: "Proposal not found" });
+    if (!proposal)
+      return res
+        .status(404)
+        .json({ success: false, message: "Proposal not found" });
     return res.status(200).json({ success: true, data: { proposal } });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -143,16 +152,19 @@ export async function getProposalStatus(req, res) {
     const proposal = await prisma.proposal.findUnique({
       where: { id },
       select: {
-        id:         true,
-        decision:   true,
-        status:     true,
+        id: true,
+        decision: true,
+        status: true,
         percentage: true,
-        ticked:     true,
-        total:      true,
-        reason:     true,
+        ticked: true,
+        total: true,
+        reason: true,
       },
     });
-    if (!proposal) return res.status(404).json({ success: false, message: "Proposal not found" });
+    if (!proposal)
+      return res
+        .status(404)
+        .json({ success: false, message: "Proposal not found" });
     return res.status(200).json({ success: true, data: proposal });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
