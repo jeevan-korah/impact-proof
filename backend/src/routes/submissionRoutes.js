@@ -12,7 +12,7 @@ const router = Router();
 
 // All submission routes require authentication + engineer role
 router.use(authenticate, requireRole("engineer"));
-
+  
 router.post("/", createSubmission);
 router.get("/my", getMySubmissions);
 router.get("/:id", getSubmission);

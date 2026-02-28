@@ -2,6 +2,11 @@
 
 import { User } from "./auth.types";
 
+export type Vertical = "frontend" | "backend" | "ml";
+export type Difficulty = "easy" | "medium" | "hard";
+export type ChallengeSource = "company" | "opensource";
+export type ChallengeStatus = "open" | "closed";
+
 export interface Challenge {
   id: string;
   postedById: string | null;
@@ -18,6 +23,8 @@ export interface Challenge {
   comparisonOperator: ">=" | "<=" | ">" | "<" | "==";
 
   constraints: Record<string, any> | null;
+  checklist: string[];
+  threshold: number;
 
   repoUrl: string | null;
   issueUrl: string | null;

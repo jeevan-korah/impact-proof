@@ -146,9 +146,11 @@ export const getSubmission = async (req, res) => {
         proposal: {
           select: {
             id: true,
-            expectedImprovement: true,
-            score: true,
-            feedback: true,
+            percentage: true,
+            decision: true,
+            reason: true,
+            ticked: true,
+            total: true,
           },
         },
         impactRecord: true,

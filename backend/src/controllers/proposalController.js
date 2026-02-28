@@ -76,14 +76,18 @@ export async function evaluate(req, res) {
 
     // 5. Return result
     return res.status(201).json({
-      proposalId:  proposal.id,
-      evaluation:  result.evaluation,
-      ticked:      result.ticked,
-      total:       result.total,
-      percentage:  result.percentage,
-      decision:    result.decision,
-      reason:      result.reason,
-      status:      proposal.status,
+      success: true,
+      message: "proposal evaluated",
+      data: {
+        proposalId:  proposal.id,
+        evaluation:  result.evaluation,
+        ticked:      result.ticked,
+        total:       result.total,
+        percentage:  result.percentage,
+        decision:    result.decision,
+        reason:      result.reason,
+        status:      proposal.status,
+      },
     });
   } catch (error) {
     console.error("createProposal error:", error);
@@ -107,9 +111,9 @@ export async function getMyProposals(req, res) {
         }
       }
     });
-    return res.status(200).json(proposals);
+    return res.status(200).json({ success: true, data: { proposals } });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 }
 
@@ -125,10 +129,10 @@ export async function getProposalById(req, res) {
         }
       }
     });
-    if (!proposal) return res.status(404).json({ error: "Proposal not found" });
-    return res.status(200).json(proposal);
+    if (!proposal) return res.status(404).json({ success: false, message: "Proposal not found" });
+    return res.status(200).json({ success: true, data: { proposal } });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 }
 
@@ -148,10 +152,10 @@ export async function getProposalStatus(req, res) {
         reason:     true,
       },
     });
-    if (!proposal) return res.status(404).json({ error: "Proposal not found" });
-    return res.status(200).json(proposal);
+    if (!proposal) return res.status(404).json({ success: false, message: "Proposal not found" });
+    return res.status(200).json({ success: true, data: proposal });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 }
 
@@ -168,8 +172,8 @@ export async function getProposalsForChallenge(req, res) {
         },
       },
     });
-    return res.status(200).json(proposals);
+    return res.status(200).json({ success: true, data: { proposals } });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 }

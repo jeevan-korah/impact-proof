@@ -1,5 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getChallengeById } from "@/api/challenges.api";
+import { createProposal } from "@/api/proposals.api";
+import { createSubmission } from "@/api/submissions.api";
+import { useAuth } from "@/hooks/useAuth";
+import type { Challenge } from "@/types/challenge.types";
 
 interface TestCase {
   name: string;
@@ -10,6 +15,7 @@ interface TestCase {
 export default function MLChallengePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [testResults, setTestResults] = useState<TestCase[]>([
@@ -19,12 +25,42 @@ export default function MLChallengePage() {
   ]);
   const [currentAccuracy, setCurrentAccuracy] = useState(78);
 
-  const challengeTitle =
+  // ── Backend-connected state ─────────────────────────────────────────────
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [engineerProgress, setEngineerProgress] = useState<any>(null);
+  const [proposalText, setProposalText] = useState("");
+  const [proposalResult, setProposalResult] = useState<any>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [repoUrl, setRepoUrl] = useState("");
+  const [submitMsg, setSubmitMsg] = useState<string | null>(null);
+
+  // Fetch real challenge data from backend
+  useEffect(() => {
+    if (!id) return;
+    getChallengeById(id)
+      .then((data) => {
+        if (data.challenge) {
+          setChallenge(data.challenge);
+          setCurrentAccuracy(data.challenge.baselineValue);
+        }
+        if (data.engineerProgress) setEngineerProgress(data.engineerProgress);
+      })
+      .catch(() => {
+        // Backend unreachable — mock data used below
+      });
+  }, [id]);
+
+  // Mock title fallback
+  const mockTitle =
     id === "5" || id === "8"
       ? "ML Model Accuracy Increase to 90% (OpenAI)"
       : id === "1"
         ? "ML Model Performance on Edge: Reduce to (NVIDIA)"
         : "ML Challenge";
+
+  const challengeTitle = challenge?.title ?? mockTitle;
+  const targetValue = challenge?.targetValue ?? 90;
+  const baselineValue = challenge?.baselineValue ?? 78;
 
   const handleUpload = () => {
     setUploadedFile("improved_model_v2.pkl");
@@ -93,6 +129,97 @@ export default function MLChallengePage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Proposal / Submission Panel */}
+        {user && (
+          <div className="mb-6 bg-surface-card border border-surface-border rounded-xl p-6">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Proposal */}
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-2">Submit Proposal</h3>
+                {challenge && (
+                  <p className="text-xs text-gray-500 mb-2">
+                    Checklist: {(challenge.checklist as string[])?.length ?? 0} items
+                    &bull; Threshold: {challenge.threshold}%
+                  </p>
+                )}
+                <textarea
+                  value={proposalText}
+                  onChange={(e) => setProposalText(e.target.value)}
+                  placeholder="Describe your approach, diagnosis, and expected improvement..."
+                  className="w-full h-24 bg-surface border border-surface-border rounded-lg p-3 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-accent/50 resize-none"
+                />
+                <button
+                  onClick={async () => {
+                    if (!id || !proposalText.trim()) return;
+                    setSubmitting(true);
+                    setSubmitMsg(null);
+                    try {
+                      const result = await createProposal({ challengeId: id, proposalText: proposalText.trim() });
+                      setProposalResult(result);
+                      setSubmitMsg(
+                        result.decision === "APPROVED"
+                          ? `Proposal APPROVED (${result.percentage}%)`
+                          : `Proposal REJECTED (${result.percentage}%) — ${result.reason}`,
+                      );
+                    } catch (err: any) {
+                      setSubmitMsg(err?.response?.data?.message || err?.response?.data?.error || "Failed to submit proposal");
+                    } finally {
+                      setSubmitting(false);
+                    }
+                  }}
+                  disabled={submitting || !proposalText.trim()}
+                  className="mt-2 px-4 py-2 text-xs bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-md font-medium"
+                >
+                  {submitting ? "Evaluating..." : "Submit Proposal"}
+                </button>
+                {proposalResult && (
+                  <div className={`mt-3 p-3 rounded-lg border text-xs ${proposalResult.decision === "APPROVED" ? "bg-accent/10 border-accent/30 text-accent" : "bg-red-500/10 border-red-500/30 text-red-400"}`}>
+                    <div className="font-semibold mb-1">{proposalResult.decision} — {proposalResult.percentage}% ({proposalResult.ticked}/{proposalResult.total})</div>
+                    <div>{proposalResult.reason}</div>
+                  </div>
+                )}
+              </div>
+              {/* Solution */}
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-2">Submit Solution Repo</h3>
+                <p className="text-xs text-gray-500 mb-2">
+                  Your proposal must be approved before you can submit.
+                  {engineerProgress?.status === "shortlisted" && <span className="text-accent ml-1">✓ Approved</span>}
+                </p>
+                <input
+                  type="text"
+                  value={repoUrl}
+                  onChange={(e) => setRepoUrl(e.target.value)}
+                  placeholder="https://github.com/username/repo"
+                  className="w-full bg-surface border border-surface-border rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-accent/50"
+                />
+                <button
+                  onClick={async () => {
+                    if (!id || !repoUrl.trim()) return;
+                    setSubmitting(true);
+                    setSubmitMsg(null);
+                    try {
+                      const result = await createSubmission({ challengeId: id, repoUrl: repoUrl.trim() });
+                      setSubmitMsg(`Submission received (ID: ${result.submissionId}) — pipeline running.`);
+                    } catch (err: any) {
+                      setSubmitMsg(err?.response?.data?.message || "Failed to submit solution");
+                    } finally {
+                      setSubmitting(false);
+                    }
+                  }}
+                  disabled={submitting || !repoUrl.trim()}
+                  className="mt-2 px-4 py-2 text-xs bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-md font-medium"
+                >
+                  {submitting ? "Submitting..." : "Submit Repository"}
+                </button>
+                {submitMsg && (
+                  <div className="mt-3 p-3 rounded-lg bg-surface border border-surface-border text-xs text-gray-300">{submitMsg}</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-6">
           {/* LEFT COLUMN - Problem Description */}
           <div className="space-y-6">
@@ -340,8 +467,8 @@ export default function MLChallengePage() {
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-gray-600">0%</span>
                     <div className="relative flex-1 mx-2">
-                      <div className="absolute right-[10%] -top-1 w-px h-3 bg-gray-600" />
-                      <span className="absolute right-[10%] top-3 text-[10px] text-gray-500 -translate-x-1/2">
+                      <div className={`absolute -top-1 w-px h-3 bg-gray-600`} style={{ right: `${100 - targetValue}%` }} />
+                      <span className={`absolute top-3 text-[10px] text-gray-500 -translate-x-1/2`} style={{ right: `${100 - targetValue}%` }}>
                         Target
                       </span>
                     </div>
@@ -351,7 +478,7 @@ export default function MLChallengePage() {
 
                 <div className="flex items-center justify-between py-2 border-t border-surface-border">
                   <span className="text-sm text-gray-400">Target:</span>
-                  <span className="text-sm text-white font-medium">90%</span>
+                  <span className="text-sm text-white font-medium">{targetValue}%</span>
                 </div>
 
                 <div className="flex items-center justify-between py-2 border-t border-surface-border">
@@ -360,7 +487,7 @@ export default function MLChallengePage() {
                   </span>
                   <span className="text-sm text-accent font-medium">
                     {testResults[0].accuracy !== null
-                      ? `+${(currentAccuracy - 78).toFixed(1)}%`
+                      ? `+${(currentAccuracy - baselineValue).toFixed(1)}%`
                       : "+XX%"}
                   </span>
                 </div>

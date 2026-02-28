@@ -4,17 +4,20 @@ import { Challenge } from "./challenge.types";
 import { Submission } from "./submission.types";
 import { User } from "./auth.types";
 
+export type ProposalStatus = "pending" | "shortlisted" | "rejected";
+
 export interface Proposal {
   id: string;
   challengeId: string;
   engineerId: string;
 
-  diagnosis: string;
-  approach: string;
-  expectedImprovement: number;
-
-  score: number | null;
-  feedback: string | null;
+  proposalText: string;
+  evaluation: Record<string, boolean> | null;
+  ticked: number | null;
+  total: number | null;
+  percentage: number | null;
+  decision: string | null;
+  reason: string | null;
 
   status: ProposalStatus;
   createdAt: string;
@@ -24,6 +27,7 @@ export interface Proposal {
   engineer?: {
     id: string;
     name: string;
-    githubUrl: string | null;
+    email?: string;
+    githubUrl?: string | null;
   };
 }

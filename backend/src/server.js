@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import submissionRoutes from "./routes/submissionRoutes.js";
 import challengeRoutes from "./routes/challengesRoutes.js";
 import proposalRoutes from "./routes/proposalRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/proposal",proposalRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/challenges", challengeRoutes);
+app.use("/api/profile", profileRoutes);
 
 // Health check
 app.get("/health", (req, res) => res.json({ status: "ok" }));

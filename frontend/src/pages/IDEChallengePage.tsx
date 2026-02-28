@@ -1,5 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getChallengeById } from "@/api/challenges.api";
+import { createProposal } from "@/api/proposals.api";
+import { createSubmission } from "@/api/submissions.api";
+import { useAuth } from "@/hooks/useAuth";
+import type { Challenge } from "@/types/challenge.types";
 
 interface FileNode {
   name: string;
@@ -353,12 +358,37 @@ function tokenizeLine(line: string): Token[] {
 export default function IDEChallengePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeFile, setActiveFile] = useState<string>("src/app.js");
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(["src", "src/components"]),
   );
 
-  const challengeTitle =
+  // ── Backend-connected state ─────────────────────────────────────────────
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [engineerProgress, setEngineerProgress] = useState<any>(null);
+  const [proposalText, setProposalText] = useState("");
+  const [proposalResult, setProposalResult] = useState<any>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [repoUrl, setRepoUrl] = useState("");
+  const [submitMsg, setSubmitMsg] = useState<string | null>(null);
+  const [showProposalPanel, setShowProposalPanel] = useState(false);
+
+  // Fetch real challenge data from backend
+  useEffect(() => {
+    if (!id) return;
+    getChallengeById(id)
+      .then((data) => {
+        if (data.challenge) setChallenge(data.challenge);
+        if (data.engineerProgress) setEngineerProgress(data.engineerProgress);
+      })
+      .catch(() => {
+        // Backend unreachable — mock data will be used below
+      });
+  }, [id]);
+
+  // Mock title fallback
+  const mockChallengeTitle =
     id === "9"
       ? "Improve Lighthouse score from 58 to ≥80"
       : id === "4" || id === "11"
@@ -374,6 +404,55 @@ export default function IDEChallengePage() {
                 : id === "3" || id === "10"
                   ? "Implement GraphQL Schema"
                   : "Challenge";
+
+  const challengeTitle = challenge?.title ?? mockChallengeTitle;
+
+  // ── Proposal submission handler ─────────────────────────────────────────
+  const handleProposalSubmit = async () => {
+    if (!id || !proposalText.trim()) return;
+    setSubmitting(true);
+    setSubmitMsg(null);
+    try {
+      const result = await createProposal({
+        challengeId: id,
+        proposalText: proposalText.trim(),
+      });
+      setProposalResult(result);
+      setSubmitMsg(
+        result.decision === "APPROVED"
+          ? `Proposal APPROVED (${result.percentage}%) — you can now submit your solution!`
+          : `Proposal REJECTED (${result.percentage}%) — ${result.reason}`,
+      );
+    } catch (err: any) {
+      setSubmitMsg(
+        err?.response?.data?.message || err?.response?.data?.error || "Failed to submit proposal",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ── Solution submission handler ─────────────────────────────────────────
+  const handleSolutionSubmit = async () => {
+    if (!id || !repoUrl.trim()) return;
+    setSubmitting(true);
+    setSubmitMsg(null);
+    try {
+      const result = await createSubmission({
+        challengeId: id,
+        repoUrl: repoUrl.trim(),
+      });
+      setSubmitMsg(
+        `Submission received (ID: ${result.submissionId}) — pipeline is running.`,
+      );
+    } catch (err: any) {
+      setSubmitMsg(
+        err?.response?.data?.message || "Failed to submit solution",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Find active file content
   function findFile(nodes: FileNode[], path: string): FileNode | null {
@@ -544,7 +623,19 @@ export default function IDEChallengePage() {
           #{id}: {challengeTitle}
         </div>
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1.5 text-xs bg-accent hover:bg-accent-dim text-white rounded-md font-medium transition-colors">
+          {user && (
+            <button
+              onClick={() => setShowProposalPanel(!showProposalPanel)}
+              className="px-3 py-1.5 text-xs bg-surface-card border border-surface-border hover:bg-surface-hover text-gray-300 rounded-md font-medium transition-colors"
+            >
+              {showProposalPanel ? "Hide Panel" : "Propose / Submit"}
+            </button>
+          )}
+          <button
+            onClick={handleSolutionSubmit}
+            disabled={!repoUrl.trim() || submitting}
+            className="px-3 py-1.5 text-xs bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-md font-medium transition-colors"
+          >
             Submit Solution
           </button>
         </div>
@@ -840,6 +931,86 @@ export default function IDEChallengePage() {
           </div>
         </div>
       </div>
+
+      {/* Proposal / Submission Panel — slides up from bottom */}
+      {showProposalPanel && (
+        <div className="border-t border-surface-border bg-surface-card p-4 max-h-[340px] overflow-y-auto">
+          <div className="max-w-4xl mx-auto grid grid-cols-2 gap-6">
+            {/* Proposal Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-2">
+                Submit Proposal
+              </h3>
+              {challenge && (
+                <div className="text-xs text-gray-500 mb-2">
+                  Checklist: {(challenge.checklist as string[])?.length ?? 0} items
+                  &bull; Threshold: {challenge.threshold}%
+                </div>
+              )}
+              <textarea
+                value={proposalText}
+                onChange={(e) => setProposalText(e.target.value)}
+                placeholder="Describe your approach, diagnosis, and expected improvement..."
+                className="w-full h-28 bg-surface border border-surface-border rounded-lg p-3 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-accent/50 resize-none"
+              />
+              <button
+                onClick={handleProposalSubmit}
+                disabled={submitting || !proposalText.trim()}
+                className="mt-2 px-4 py-2 text-xs bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-md font-medium transition-colors"
+              >
+                {submitting ? "Evaluating..." : "Submit Proposal"}
+              </button>
+
+              {proposalResult && (
+                <div className={`mt-3 p-3 rounded-lg border text-xs ${
+                  proposalResult.decision === "APPROVED"
+                    ? "bg-accent/10 border-accent/30 text-accent"
+                    : "bg-red-500/10 border-red-500/30 text-red-400"
+                }`}>
+                  <div className="font-semibold mb-1">
+                    {proposalResult.decision} — {proposalResult.percentage}%
+                    ({proposalResult.ticked}/{proposalResult.total})
+                  </div>
+                  <div>{proposalResult.reason}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Solution Submission Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-2">
+                Submit Solution
+              </h3>
+              <p className="text-xs text-gray-500 mb-2">
+                Your proposal must be approved before you can submit.
+                {engineerProgress?.status === "shortlisted" && (
+                  <span className="text-accent ml-1">✓ Proposal approved</span>
+                )}
+              </p>
+              <input
+                type="text"
+                value={repoUrl}
+                onChange={(e) => setRepoUrl(e.target.value)}
+                placeholder="https://github.com/username/repo"
+                className="w-full bg-surface border border-surface-border rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-accent/50"
+              />
+              <button
+                onClick={handleSolutionSubmit}
+                disabled={submitting || !repoUrl.trim()}
+                className="mt-2 px-4 py-2 text-xs bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-md font-medium transition-colors"
+              >
+                {submitting ? "Submitting..." : "Submit Repository"}
+              </button>
+
+              {submitMsg && (
+                <div className="mt-3 p-3 rounded-lg bg-surface border border-surface-border text-xs text-gray-300">
+                  {submitMsg}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
