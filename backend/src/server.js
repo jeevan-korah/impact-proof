@@ -43,8 +43,18 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log(`server running on http://localhost:${PORT}`),
-);
+
+// Express 5 returns a Promise from app.listen()
+const startServer = async () => {
+  try {
+    await app.listen(PORT);
+    console.log(`server running on http://localhost:${PORT}`);
+  } catch (err) {
+    console.error("[startup error]", err);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;

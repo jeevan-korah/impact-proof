@@ -22,10 +22,10 @@ export default function LoginPage() {
       navigate("/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);
-      const errorMsg = 
-        err?.response?.data?.message || 
-        err?.response?.data?.error || 
-        err?.message || 
+      const errorMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
         "Invalid email or password";
       setError(errorMsg);
     } finally {

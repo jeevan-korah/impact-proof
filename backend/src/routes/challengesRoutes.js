@@ -7,6 +7,7 @@ import {
   updateChallengeStatus,
   getMyChallenges,
   getChallengeLeaderboard,
+  getChallengeProposals,
 } from "../controllers/challengesController.js";
 import { authenticate, requireRole } from "../middleware/authMiddleware.js";
 
@@ -32,6 +33,12 @@ router.get(
   authenticate,
   requireRole("company"),
   getMyChallenges,
+);
+router.get(
+  "/:id/proposals",
+  authenticate,
+  requireRole("company"),
+  getChallengeProposals,
 );
 
 export default router;

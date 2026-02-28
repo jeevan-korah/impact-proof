@@ -33,7 +33,7 @@ export default function CreateChallengePage() {
     try {
       // Filter out empty checklist items
       const checklist = formData.checklist.filter((item) => item.trim() !== "");
-      
+
       if (checklist.length === 0) {
         setError("At least one checklist item is required");
         setLoading(false);
@@ -55,7 +55,7 @@ export default function CreateChallengePage() {
       setError(
         err?.response?.data?.message ||
           err?.message ||
-          "Failed to create challenge"
+          "Failed to create challenge",
       );
     } finally {
       setLoading(false);
@@ -85,7 +85,9 @@ export default function CreateChallengePage() {
       <div className="min-h-screen bg-surface">
         <Navbar />
         <div className="max-w-2xl mx-auto px-6 py-16 text-center">
-          <p className="text-gray-400">Only company accounts can create challenges.</p>
+          <p className="text-gray-400">
+            Only company accounts can create challenges.
+          </p>
         </div>
       </div>
     );
@@ -96,7 +98,9 @@ export default function CreateChallengePage() {
       <Navbar />
 
       <main className="max-w-3xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-semibold text-white mb-6">Create New Challenge</h1>
+        <h1 className="text-2xl font-semibold text-white mb-6">
+          Create New Challenge
+        </h1>
 
         {error && (
           <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
@@ -107,26 +111,36 @@ export default function CreateChallengePage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Info */}
           <div className="bg-surface-card border border-surface-border rounded-xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-white mb-4">Basic Information</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">
+              Basic Information
+            </h2>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Title
+              </label>
               <input
                 type="text"
                 required
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                 placeholder="e.g., Improve API Response Time to <100ms"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Description
+              </label>
               <textarea
                 required
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 rows={4}
                 className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50 resize-none"
                 placeholder="Detailed description of the challenge..."
@@ -135,10 +149,17 @@ export default function CreateChallengePage() {
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Vertical</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Vertical
+                </label>
                 <select
                   value={formData.vertical}
-                  onChange={(e) => setFormData({ ...formData, vertical: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      vertical: e.target.value as any,
+                    })
+                  }
                   className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                 >
                   <option value="frontend">Frontend</option>
@@ -148,10 +169,17 @@ export default function CreateChallengePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Difficulty</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Difficulty
+                </label>
                 <select
                   value={formData.difficulty}
-                  onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      difficulty: e.target.value as any,
+                    })
+                  }
                   className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                 >
                   <option value="easy">Easy</option>
@@ -161,10 +189,14 @@ export default function CreateChallengePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Source</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Source
+                </label>
                 <select
                   value={formData.source}
-                  onChange={(e) => setFormData({ ...formData, source: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, source: e.target.value as any })
+                  }
                   className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                 >
                   <option value="company">Company</option>
@@ -176,40 +208,63 @@ export default function CreateChallengePage() {
 
           {/* KPI Metrics */}
           <div className="bg-surface-card border border-surface-border rounded-xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-white mb-4">KPI Metrics</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">
+              KPI Metrics
+            </h2>
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Baseline Value</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Baseline Value
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   required
                   value={formData.baselineValue}
-                  onChange={(e) => setFormData({ ...formData, baselineValue: parseFloat(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      baselineValue: parseFloat(e.target.value),
+                    })
+                  }
                   className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                   placeholder="78"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Target Value</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Target Value
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   required
                   value={formData.targetValue}
-                  onChange={(e) => setFormData({ ...formData, targetValue: parseFloat(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      targetValue: parseFloat(e.target.value),
+                    })
+                  }
                   className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                   placeholder="90"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Operator</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Operator
+                </label>
                 <select
                   value={formData.comparisonOperator}
-                  onChange={(e) => setFormData({ ...formData, comparisonOperator: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      comparisonOperator: e.target.value as any,
+                    })
+                  }
                   className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                 >
                   <option value=">=">&gt;=</option>
@@ -224,7 +279,9 @@ export default function CreateChallengePage() {
 
           {/* Proposal Evaluation */}
           <div className="bg-surface-card border border-surface-border rounded-xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-white mb-4">Proposal Evaluation</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">
+              Proposal Evaluation
+            </h2>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -236,7 +293,12 @@ export default function CreateChallengePage() {
                 max="100"
                 required
                 value={formData.threshold}
-                onChange={(e) => setFormData({ ...formData, threshold: parseFloat(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    threshold: parseFloat(e.target.value),
+                  })
+                }
                 className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                 placeholder="70"
               />
@@ -255,7 +317,9 @@ export default function CreateChallengePage() {
                     <input
                       type="text"
                       value={item}
-                      onChange={(e) => updateChecklistItem(index, e.target.value)}
+                      onChange={(e) =>
+                        updateChecklistItem(index, e.target.value)
+                      }
                       className="flex-1 bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                       placeholder="e.g., Proposal includes specific optimization techniques"
                     />
@@ -283,7 +347,9 @@ export default function CreateChallengePage() {
 
           {/* Optional Links */}
           <div className="bg-surface-card border border-surface-border rounded-xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-white mb-4">Optional Links</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">
+              Optional Links
+            </h2>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -292,7 +358,9 @@ export default function CreateChallengePage() {
               <input
                 type="url"
                 value={formData.repoUrl}
-                onChange={(e) => setFormData({ ...formData, repoUrl: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, repoUrl: e.target.value })
+                }
                 className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                 placeholder="https://github.com/org/repo"
               />
@@ -305,7 +373,9 @@ export default function CreateChallengePage() {
               <input
                 type="url"
                 value={formData.issueUrl}
-                onChange={(e) => setFormData({ ...formData, issueUrl: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, issueUrl: e.target.value })
+                }
                 className="w-full bg-surface border border-surface-border rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:border-accent/50"
                 placeholder="https://github.com/org/repo/issues/123"
               />

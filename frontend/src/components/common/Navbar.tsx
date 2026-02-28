@@ -13,6 +13,7 @@ export default function Navbar() {
 
   const companyLinks = [
     { to: "/", label: "Dashboard" },
+    { to: "/my-challenges", label: "My Challenges" },
     { to: "/create-challenge", label: "Create Challenge" },
   ];
 

@@ -17,7 +17,14 @@ export const createSubmission = async (req, res) => {
     const engineerId = req.user.userId;
     const { challengeId, repoUrl } = req.body;
 
-    console.log("[createSubmission] engineerId:", engineerId, "challengeId:", challengeId, "repoUrl:", repoUrl);
+    console.log(
+      "[createSubmission] engineerId:",
+      engineerId,
+      "challengeId:",
+      challengeId,
+      "repoUrl:",
+      repoUrl,
+    );
 
     if (!challengeId || !repoUrl) {
       return res.status(400).json({
@@ -58,7 +65,12 @@ export const createSubmission = async (req, res) => {
       },
     });
 
-    console.log("[createSubmission] proposal found:", proposal ? `id=${proposal.id}, status=${proposal.status}, decision=${proposal.decision}` : "none");
+    console.log(
+      "[createSubmission] proposal found:",
+      proposal
+        ? `id=${proposal.id}, status=${proposal.status}, decision=${proposal.decision}`
+        : "none",
+    );
 
     if (!proposal) {
       return res.status(403).json({
@@ -68,7 +80,11 @@ export const createSubmission = async (req, res) => {
     }
 
     if (proposal.status !== "shortlisted") {
-      console.log("[createSubmission] REJECTED: proposal status is", proposal.status, "not shortlisted");
+      console.log(
+        "[createSubmission] REJECTED: proposal status is",
+        proposal.status,
+        "not shortlisted",
+      );
       return res.status(403).json({
         success: false,
         message: `your proposal is ${proposal.status} — only shortlisted proposals can proceed to submission`,

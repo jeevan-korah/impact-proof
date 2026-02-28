@@ -49,3 +49,19 @@ export async function getLeaderboard(id: string) {
 
   return res.data.data;
 }
+
+export async function getMyChallenges() {
+  const res = await api.get<ApiResponse<{ challenges: Challenge[] }>>(
+    "/challenges/company/my",
+  );
+
+  return res.data.data.challenges;
+}
+
+export async function getChallengeProposals(challengeId: string) {
+  const res = await api.get<ApiResponse<{ proposals: any[] }>>(
+    `/challenges/${challengeId}/proposals`,
+  );
+
+  return res.data.data.proposals;
+}

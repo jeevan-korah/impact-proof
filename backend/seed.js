@@ -45,7 +45,8 @@ async function seed() {
     data: {
       postedById: company.id,
       title: "ML Model Accuracy Increase to 90% (OpenAI)",
-      description: "Improve a classification model's accuracy from 78% to at least 90% while maintaining inference latency under 200ms.",
+      description:
+        "Improve a classification model's accuracy from 78% to at least 90% while maintaining inference latency under 200ms.",
       vertical: "ml",
       difficulty: "medium",
       source: "company",
@@ -77,7 +78,8 @@ async function seed() {
     data: {
       postedById: company.id,
       title: "Reduce Payment Transaction Latency to <200ms",
-      description: "Optimize the legacy payment microservice to reduce average transaction latency from 450ms to under 200ms while maintaining zero transaction failures.",
+      description:
+        "Optimize the legacy payment microservice to reduce average transaction latency from 450ms to under 200ms while maintaining zero transaction failures.",
       vertical: "backend",
       difficulty: "hard",
       source: "company",
@@ -109,7 +111,8 @@ async function seed() {
     data: {
       postedById: company.id,
       title: "Improve Lighthouse Score from 58 to ≥80",
-      description: "Optimize the web application to improve the Lighthouse performance score from 58 to at least 80.",
+      description:
+        "Optimize the web application to improve the Lighthouse performance score from 58 to at least 80.",
       vertical: "frontend",
       difficulty: "medium",
       source: "company",
