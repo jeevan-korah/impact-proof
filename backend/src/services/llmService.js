@@ -1,39 +1,49 @@
-// src/services/llm.service.js
-// Evaluates engineer proposals using Claude API.
-// Returns a structured score + feedback object.
 
-import Anthropic from "@anthropic-ai/sdk";
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-// ─────────────────────────────────────────────
 // evaluateProposal
-// Sends the challenge + proposal to Claude and
-// returns a parsed score and feedback.
+// Sends the proposalText + checklist + threshold to Ollama
+// and returns a parsed evaluation object.
 //
 // @param {object} params
-// @param {object} params.challenge  - challenge row from DB
-// @param {object} params.proposal   - proposal row from DB
+// @param {string} params.proposalText   - free text proposal from engineer
+// @param {string[]} params.checklist    - array of checklist items from company
+// @param {number} params.threshold      - approval threshold percentage (default 70)
 //
-// @returns {{ score, feedback, error }}
+// @returns {{ evaluation, ticked, total, percentage, decision, reason, error }}
 // ─────────────────────────────────────────────
-export async function evaluateProposal({ challenge, proposal }) {
+export async function evaluateProposal({ proposalText, checklist, threshold = 70 }) {
   const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(challenge, proposal);
+  const userPrompt = buildUserPrompt(proposalText, checklist, threshold);
 
   try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
+    const response = await fetch("http://localhost:11434/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "mistral",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        stream: false,
+        format: "json",
+        options: { temperature: 0 },
+      }),
     });
 
-    const raw = response.content[0]?.text ?? "";
+    const data = await response.json();
+    const raw = data.message?.content ?? "";
     return parseEvaluationResponse(raw);
   } catch (error) {
-    console.error("[evaluateProposal] Claude API error:", error);
-    return { score: 0, feedback: null, error: error.message };
+    console.error("[evaluateProposal] Ollama error:", error);
+    return {
+      evaluation: null,
+      ticked: 0,
+      total: 0,
+      percentage: 0,
+      decision: "REJECTED",
+      reason: null,
+      error: error.message,
+    };
   }
 }
 
@@ -41,92 +51,56 @@ export async function evaluateProposal({ challenge, proposal }) {
 // INTERNAL — build system prompt
 // ─────────────────────────────────────────────
 function buildSystemPrompt() {
-  return `You are a senior technical evaluator for a software engineering challenge platform called ImpactProof.
+  return `You are a strict but fair proposal evaluation assistant.
+You evaluate proposals against a checklist and return a structured JSON result.
+Always respond with valid JSON only. Do not include any text outside the JSON.`;
+}
 
-Your job is to evaluate engineer proposals against real-world KPI challenges.
+// ─────────────────────────────────────────────
+// INTERNAL — build user prompt
+// ─────────────────────────────────────────────
+function buildUserPrompt(proposalText, checklist, threshold) {
+  const checklistFormatted = checklist.map((item) => `- ${item}`).join("\n");
 
-You must evaluate each proposal on three criteria and return a single composite score plus concise written feedback.
+  return `You are a proposal evaluation assistant. Your job is to review a proposal and determine
+whether it satisfies each item in a predefined checklist.
 
-SCORING CRITERIA:
+## Checklist
+For each item below, tick it (true) if the proposal clearly addresses it, otherwise mark it false.
 
-1. DIAGNOSIS QUALITY (0-33 points)
-   - Does the engineer demonstrate understanding of WHY the baseline metric is where it is?
-   - Is the root cause analysis specific to this problem, or is it generic?
-   - Vague diagnosis ("the code is slow") scores low. Specific diagnosis ("the N+1 query in the data fetch layer causes 300ms overhead") scores high.
+${checklistFormatted}
 
-2. TECHNICAL APPROACH FEASIBILITY (0-34 points)
-   - Is the proposed solution technically capable of achieving the stated metric improvement?
-   - Does it align with the challenge's vertical (frontend/backend/ml)?
-   - Are the specific techniques mentioned appropriate and realistic?
-   - Generic AI-generated approaches ("use caching, indexing, and optimise loops") score low.
-   - Specific, grounded approaches referencing the actual problem score high.
+## Proposal
+${proposalText}
 
-3. CONSTRAINT AWARENESS (0-33 points)
-   - Does the engineer acknowledge the challenge's specific constraints?
-   - Do they explain how their approach respects those constraints?
-   - Do they identify trade-offs?
-   - Ignoring constraints entirely = 0 points for this criterion.
+## Instructions
+1. Go through each checklist item one by one.
+2. Mark it as true ONLY if the proposal explicitly or clearly implies it is covered.
+3. Calculate the percentage of ticked items.
+4. If the percentage is ${threshold}% or above → APPROVED, otherwise → REJECTED.
+5. Return your response ONLY as a valid JSON object in this exact format:
 
-TOTAL SCORE = sum of all three criteria (0-100).
-
-Shortlist threshold: 65 and above.
-
-IMPORTANT RULES:
-- Be strict. A score of 80+ means the proposal is genuinely excellent.
-- Penalise heavily for vagueness and generic language.
-- Reward specificity, trade-off awareness, and constraint acknowledgement.
-- Do NOT reward proposals that merely restate the problem.
-
-Respond ONLY with valid JSON. No preamble, no explanation outside the JSON, no markdown backticks.
-
-Required format:
 {
-  "score_diagnosis": <integer 0-33>,
-  "score_feasibility": <integer 0-34>,
-  "score_constraints": <integer 0-33>,
-  "score_total": <integer 0-100>,
-  "feedback": "<2-4 sentences explaining the score. Be specific about what was strong and what was weak. Reference the engineer's actual words where relevant.>"
-}`;
+  "evaluation": {
+    "checklist item 1": true or false,
+    "checklist item 2": true or false
+  },
+  "ticked": <number of true items>,
+  "total": <total checklist items>,
+  "percentage": <percentage as a number>,
+  "decision": "APPROVED" or "REJECTED",
+  "reason": "<brief explanation>"
+}
+
+Do not include any text outside the JSON.`;
 }
 
 // ─────────────────────────────────────────────
-// INTERNAL — build user prompt from DB rows
-// ─────────────────────────────────────────────
-function buildUserPrompt(challenge, proposal) {
-  const constraintText = challenge.constraints
-    ? JSON.stringify(challenge.constraints, null, 2)
-    : "No explicit constraints specified.";
-
-  return `CHALLENGE DETAILS:
-Title: ${challenge.title}
-Vertical: ${challenge.vertical}
-Difficulty: ${challenge.difficulty}
-Description: ${challenge.description}
-Baseline Value: ${challenge.baselineValue}
-Target Value: ${challenge.targetValue} (operator: ${challenge.comparisonOperator})
-Constraints:
-${constraintText}
-
-ENGINEER'S PROPOSAL:
-
-Diagnosis:
-${proposal.diagnosis}
-
-Technical Approach:
-${proposal.approach}
-
-Expected Improvement: ${proposal.expectedImprovement}%
-
-Evaluate this proposal strictly against the criteria in your instructions.`;
-}
-
-// ─────────────────────────────────────────────
-// INTERNAL — parse and validate Claude's response
+// INTERNAL — parse and validate Ollama's response
 // Returns a safe object even if JSON is malformed.
 // ─────────────────────────────────────────────
 function parseEvaluationResponse(raw) {
   try {
-    // Strip any accidental markdown fences
     const cleaned = raw
       .replace(/```json/gi, "")
       .replace(/```/g, "")
@@ -134,38 +108,28 @@ function parseEvaluationResponse(raw) {
 
     const parsed = JSON.parse(cleaned);
 
-    // Validate all required fields exist and are in range
-    const scoreDiagnosis = clamp(parseInt(parsed.score_diagnosis ?? 0), 0, 33);
-    const scoreFeasibility = clamp(
-      parseInt(parsed.score_feasibility ?? 0),
-      0,
-      34,
-    );
-    const scoreConstraints = clamp(
-      parseInt(parsed.score_constraints ?? 0),
-      0,
-      33,
-    );
+    // Recompute ticked count from evaluation object to prevent injection
+    const evaluation = parsed.evaluation ?? {};
+    const ticked = Object.values(evaluation).filter(Boolean).length;
+    const total = Object.keys(evaluation).length;
+    const percentage = total > 0 ? parseFloat(((ticked / total) * 100).toFixed(1)) : 0;
+    const decision = parsed.decision === "APPROVED" ? "APPROVED" : "REJECTED";
+    const reason =
+      typeof parsed.reason === "string" && parsed.reason.length > 0
+        ? parsed.reason
+        : "No reason provided.";
 
-    // Recompute total from parts to prevent prompt injection inflating scores
-    const score = scoreDiagnosis + scoreFeasibility + scoreConstraints;
-
-    const feedback =
-      typeof parsed.feedback === "string" && parsed.feedback.length > 0
-        ? parsed.feedback
-        : "No feedback provided.";
-
-    return { score, feedback, error: null };
+    return { evaluation, ticked, total, percentage, decision, reason, error: null };
   } catch (error) {
     console.error("[parseEvaluationResponse] failed to parse:", raw);
     return {
-      score: 0,
-      feedback: null,
+      evaluation: null,
+      ticked: 0,
+      total: 0,
+      percentage: 0,
+      decision: "REJECTED",
+      reason: null,
       error: `Failed to parse evaluation response: ${error.message}`,
     };
   }
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
 }

@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import submissionRoutes from "./routes/submissionRoutes.js";
 import challengeRoutes from "./routes/challengesRoutes.js";
+import proposalRoutes from "./routes/proposalRoutes.js";
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/proposal",proposalRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/challenges", challengeRoutes);
 
