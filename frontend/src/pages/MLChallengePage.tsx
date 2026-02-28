@@ -1,591 +1,305 @@
-import { useNavigate, useParams } from "react-router-dom";
+﻿import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getChallengeById } from "@/api/challenges.api";
 import { createProposal } from "@/api/proposals.api";
-import { createSubmission } from "@/api/submissions.api";
 import { useAuth } from "@/hooks/useAuth";
 import type { Challenge } from "@/types/challenge.types";
 
-interface TestCase {
-  name: string;
-  accuracy: number | null;
-  passed: boolean | null;
-}
+// Right-panel phases (no auto-skip)
+type Phase = "register" | "proposal" | "upload";
 
 export default function MLChallengePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const [testResults, setTestResults] = useState<TestCase[]>([
-    { name: "Test Case 1", accuracy: null, passed: null },
-    { name: "Test Case 2", accuracy: null, passed: null },
-    { name: "Test Case 3", accuracy: null, passed: null },
-  ]);
-  const [currentAccuracy, setCurrentAccuracy] = useState(78);
 
-  // ── Backend-connected state ─────────────────────────────────────────────
+  // Backend state
   const [challenge, setChallenge] = useState<Challenge | null>(null);
-  const [engineerProgress, setEngineerProgress] = useState<any>(null);
+  const [phase, setPhase] = useState<Phase>("register");
+
+  // Proposal state
   const [proposalText, setProposalText] = useState("");
   const [proposalResult, setProposalResult] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [repoUrl, setRepoUrl] = useState("");
   const [submitMsg, setSubmitMsg] = useState<string | null>(null);
 
-  // Fetch real challenge data from backend
+  // Upload state
+  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Fetch challenge only - no auto-skip
   useEffect(() => {
     if (!id) return;
     getChallengeById(id)
       .then((data) => {
-        if (data.challenge) {
-          setChallenge(data.challenge);
-          setCurrentAccuracy(data.challenge.baselineValue);
-        }
-        if (data.engineerProgress) setEngineerProgress(data.engineerProgress);
+        if (data.challenge) setChallenge(data.challenge);
       })
-      .catch(() => {
-        // Backend unreachable — mock data used below
-      });
+      .catch(() => {});
   }, [id]);
 
-  // Mock title fallback
-  const mockTitle =
-    id === "5" || id === "8"
-      ? "ML Model Accuracy Increase to 90% (OpenAI)"
-      : id === "1"
-        ? "ML Model Performance on Edge: Reduce to (NVIDIA)"
-        : "ML Challenge";
-
-  const challengeTitle = challenge?.title ?? mockTitle;
+  const challengeTitle = challenge?.title ?? "ML Challenge";
   const targetValue = challenge?.targetValue ?? 90;
   const baselineValue = challenge?.baselineValue ?? 78;
 
-  const handleUpload = () => {
-    setUploadedFile("improved_model_v2.pkl");
+  // Handlers
+  const handleProposalSubmit = async () => {
+    if (!id || !proposalText.trim()) return;
+    setSubmitting(true);
+    setSubmitMsg(null);
+    try {
+      const result = await createProposal({ challengeId: id, proposalText: proposalText.trim() });
+      setProposalResult(result);
+      if (result.decision === "APPROVED") {
+        setSubmitMsg("Proposal APPROVED (" + result.percentage + "%)");
+        setTimeout(() => setPhase("upload"), 1200);
+      } else {
+        setSubmitMsg("Proposal REJECTED (" + result.percentage + "%) - " + result.reason);
+      }
+    } catch (err: any) {
+      setSubmitMsg(err?.response?.data?.message || err?.response?.data?.error || "Failed to submit proposal");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleRunTests = () => {
-    if (!uploadedFile) return;
-    setIsRunning(true);
-    // Simulate test execution
-    setTimeout(() => {
-      setTestResults([
-        { name: "Test Case 1", accuracy: 91.2, passed: true },
-        { name: "Test Case 2", accuracy: 90.5, passed: true },
-        { name: "Test Case 3", accuracy: 88.5, passed: false },
-      ]);
-      setCurrentAccuracy(88.5);
-      setIsRunning(false);
-    }, 2000);
+  const handleModelUpload = () => {
+    setIsUploading(true);
+    setUploadProgress(0);
+    const interval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsUploading(false);
+          setUploadedFile("improved_model_v2.h5");
+          return 100;
+        }
+        return prev + Math.random() * 15 + 5;
+      });
+    }, 200);
   };
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="h-screen flex flex-col bg-black">
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-6 py-3 bg-surface-card border-b border-surface-border">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#111] border-b border-[#222] shrink-0">
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/")}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
+          <button onClick={() => navigate("/")} className="text-gray-500 hover:text-white transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-accent rounded flex items-center justify-center">
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="3"
-              >
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg>
+            <div className="w-5 h-5 bg-emerald-600 rounded flex items-center justify-center">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
             </div>
-            <span className="text-sm font-semibold text-white">
-              ImpactProof
-            </span>
+            <span className="text-sm font-semibold text-gray-200">ImpactProof</span>
           </div>
         </div>
-        <div className="text-sm text-gray-300 font-medium">
-          #{id}: {challengeTitle}
+        <div className="text-sm text-gray-400 font-medium max-w-md truncate">#{id}: {challengeTitle}</div>
+        <div className="flex items-center gap-3 px-3 py-1.5 rounded bg-[#111] border border-[#222]">
+          <span className="text-[10px] uppercase tracking-wider text-gray-600">Baseline</span>
+          <span className="text-sm text-gray-300 font-mono">{baselineValue}%</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+          <span className="text-[10px] uppercase tracking-wider text-gray-600">Target</span>
+          <span className="text-sm text-emerald-400 font-mono font-medium">{targetValue}%</span>
         </div>
-        <button className="px-4 py-1.5 text-xs bg-accent hover:bg-accent-dim text-white rounded-md font-medium transition-colors">
-          Submit Results
-        </button>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Proposal / Submission Panel */}
-        {user && (
-          <div className="mb-6 bg-surface-card border border-surface-border rounded-xl p-6">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Proposal */}
-              <div>
-                <h3 className="text-sm font-semibold text-white mb-2">
-                  Submit Proposal
-                </h3>
-                {challenge && (
-                  <p className="text-xs text-gray-500 mb-2">
-                    Checklist: {(challenge.checklist as string[])?.length ?? 0}{" "}
-                    items &bull; Threshold: {challenge.threshold}%
-                  </p>
-                )}
-                <textarea
-                  value={proposalText}
-                  onChange={(e) => setProposalText(e.target.value)}
-                  placeholder="Describe your approach, diagnosis, and expected improvement..."
-                  className="w-full h-24 bg-surface border border-surface-border rounded-lg p-3 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-accent/50 resize-none"
-                />
-                <button
-                  onClick={async () => {
-                    if (!id || !proposalText.trim()) return;
-                    setSubmitting(true);
-                    setSubmitMsg(null);
-                    try {
-                      const result = await createProposal({
-                        challengeId: id,
-                        proposalText: proposalText.trim(),
-                      });
-                      setProposalResult(result);
-                      setSubmitMsg(
-                        result.decision === "APPROVED"
-                          ? `Proposal APPROVED (${result.percentage}%)`
-                          : `Proposal REJECTED (${result.percentage}%) — ${result.reason}`,
-                      );
-                    } catch (err: any) {
-                      setSubmitMsg(
-                        err?.response?.data?.message ||
-                          err?.response?.data?.error ||
-                          "Failed to submit proposal",
-                      );
-                    } finally {
-                      setSubmitting(false);
-                    }
-                  }}
-                  disabled={submitting || !proposalText.trim()}
-                  className="mt-2 px-4 py-2 text-xs bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-md font-medium"
-                >
-                  {submitting ? "Evaluating..." : "Submit Proposal"}
-                </button>
-                {proposalResult && (
-                  <div
-                    className={`mt-3 p-3 rounded-lg border text-xs ${proposalResult.decision === "APPROVED" ? "bg-accent/10 border-accent/30 text-accent" : "bg-red-500/10 border-red-500/30 text-red-400"}`}
-                  >
-                    <div className="font-semibold mb-1">
-                      {proposalResult.decision} — {proposalResult.percentage}% (
-                      {proposalResult.ticked}/{proposalResult.total})
-                    </div>
-                    <div>{proposalResult.reason}</div>
-                  </div>
-                )}
-              </div>
-              {/* Solution */}
-              <div>
-                <h3 className="text-sm font-semibold text-white mb-2">
-                  Submit Solution Repo
-                </h3>
-                <p className="text-xs text-gray-500 mb-2">
-                  Your proposal must be approved before you can submit.
-                  {engineerProgress?.status === "shortlisted" && (
-                    <span className="text-accent ml-1">✓ Approved</span>
-                  )}
-                </p>
-                <input
-                  type="text"
-                  value={repoUrl}
-                  onChange={(e) => setRepoUrl(e.target.value)}
-                  placeholder="https://github.com/username/repo"
-                  className="w-full bg-surface border border-surface-border rounded-lg px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-accent/50"
-                />
-                <button
-                  onClick={async () => {
-                    if (!id || !repoUrl.trim()) return;
-                    setSubmitting(true);
-                    setSubmitMsg(null);
-                    try {
-                      const result = await createSubmission({
-                        challengeId: id,
-                        repoUrl: repoUrl.trim(),
-                      });
-                      setSubmitMsg(
-                        `Submission received (ID: ${result.submissionId}) — pipeline running.`,
-                      );
-                    } catch (err: any) {
-                      setSubmitMsg(
-                        err?.response?.data?.message ||
-                          "Failed to submit solution",
-                      );
-                    } finally {
-                      setSubmitting(false);
-                    }
-                  }}
-                  disabled={submitting || !repoUrl.trim()}
-                  className="mt-2 px-4 py-2 text-xs bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-md font-medium"
-                >
-                  {submitting ? "Submitting..." : "Submit Repository"}
-                </button>
-                {submitMsg && (
-                  <div className="mt-3 p-3 rounded-lg bg-surface border border-surface-border text-xs text-gray-300">
-                    {submitMsg}
-                  </div>
-                )}
-              </div>
-            </div>
+      {/* Split Layout */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* ── LEFT: Challenge Description (always visible) ─────────────── */}
+        <div className="w-1/2 border-r border-[#222] flex flex-col overflow-hidden">
+          {/* Tab bar */}
+          <div className="flex items-center gap-0 bg-[#111] border-b border-[#222] px-0 shrink-0">
+            <div className="px-4 py-2.5 text-xs font-medium text-white bg-black border-b-2 border-emerald-500">Description</div>
+            <div className="px-4 py-2.5 text-xs font-medium text-gray-600 hover:text-gray-400 cursor-pointer">Resources</div>
           </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-6">
-          {/* LEFT COLUMN - Problem Description */}
-          <div className="space-y-6">
-            {/* Description Card */}
-            <div className="bg-surface-card border border-surface-border rounded-xl p-6">
-              <h2 className="text-base font-semibold text-white mb-4">
-                Description
-              </h2>
-              <div className="text-sm text-gray-400 space-y-3 leading-relaxed">
-                <p>
-                  The ML Model Accuracy Increase to 90% (OpenAI) challenge
-                  requires improving a classification model's accuracy on the
-                  provided test dataset. The current baseline model achieves 78%
-                  accuracy on the validation set.
-                </p>
-                <p>
-                  The model architecture is based on a pre-trained transformer
-                  with fine-tuned classification layers. Your task is to improve
-                  the model's accuracy to at least 90% while maintaining
-                  inference latency constraints.
-                </p>
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Description */}
+            <div>
+              <h2 className="text-base font-semibold text-white mb-3">{challengeTitle}</h2>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">ML/AI</span>
+                <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">{challenge?.difficulty ?? "Medium"}</span>
               </div>
-
-              <h3 className="text-sm font-semibold text-white mt-6 mb-3">
-                Constraints:
-              </h3>
-              <ul className="text-sm text-gray-400 space-y-1.5">
-                <li className="flex items-start gap-2">
-                  <span className="text-gray-600 mt-1">•</span>
-                  <span>
-                    Base model architecture must remain a transformer or similar
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-gray-600 mt-1">•</span>
-                  <span>
-                    Inference latency must stay under 200ms per prediction
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-gray-600 mt-1">•</span>
-                  <span>
-                    Model accuracy must reach at least 90% on hidden test set
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-gray-600 mt-1">•</span>
-                  <span>
-                    Training must complete within 800 seconds on provided
-                    hardware
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-gray-600 mt-1">•</span>
-                  <span>
-                    Full-stack model evaluation with cached predictions
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-gray-600 mt-1">•</span>
-                  <span>Unmodified model architecture layer count</span>
-                </li>
-              </ul>
-
-              <h3 className="text-sm font-semibold text-white mt-6 mb-3">
-                Downloads:
-              </h3>
-              <div className="space-y-2">
-                <a
-                  href="#"
-                  className="flex items-center gap-2 text-sm text-accent hover:text-accent-dim transition-colors"
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                  </svg>
-                  Download Baseline Model v1.2
-                </a>
-                <a
-                  href="#"
-                  className="flex items-center gap-2 text-sm text-accent hover:text-accent-dim transition-colors"
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                  </svg>
-                  Download Baseline Model v1.3
-                </a>
+              <div className="text-sm text-gray-400 leading-relaxed space-y-3">
+                {challenge?.description ? (
+                  <p>{challenge.description}</p>
+                ) : (
+                  <>
+                    <p>Improve a classification model&apos;s accuracy on the provided test dataset. The current baseline achieves <span className="text-gray-200 font-medium">{baselineValue}% accuracy</span> on the validation set.</p>
+                    <p>Your goal is to reach at least <span className="text-emerald-400 font-medium">{targetValue}%</span> while maintaining inference latency constraints.</p>
+                  </>
+                )}
               </div>
-
-              <h3 className="text-sm font-semibold text-white mt-6 mb-3">
-                Dataset:
-              </h3>
-              <a
-                href="#"
-                className="flex items-center gap-2 text-sm text-accent hover:text-accent-dim transition-colors"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                </svg>
-                Download Dataset
-              </a>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN - Submission & Metrics */}
-          <div className="space-y-6">
-            {/* Upload Card */}
-            <div className="bg-surface-card border border-surface-border rounded-xl p-6">
-              <h2 className="text-base font-semibold text-white mb-4">
-                Model Submission
-              </h2>
-
-              {!uploadedFile ? (
-                <div
-                  onClick={handleUpload}
-                  className="border-2 border-dashed border-surface-border rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-accent/40 transition-colors group"
-                >
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="text-gray-500 group-hover:text-accent transition-colors mb-3"
-                  >
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                  <p className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
-                    Drag and drop & upload
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    New trained model file
-                  </p>
-                  <p className="text-xs text-gray-600">(drag file here)</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-surface-border">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#10b981"
-                      strokeWidth="2"
-                    >
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                    <div className="flex-1">
-                      <p className="text-sm text-white">{uploadedFile}</p>
-                      <p className="text-xs text-gray-500">
-                        42.3 MB • Uploaded just now
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setUploadedFile(null)}
-                      className="text-gray-500 hover:text-red-400 text-xs"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <button
-                    onClick={handleRunTests}
-                    disabled={isRunning}
-                    className="w-full py-2.5 bg-accent hover:bg-accent-dim disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                  >
-                    {isRunning ? (
-                      <>
-                        <svg
-                          className="animate-spin"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M21 12a9 9 0 11-6.219-8.56" />
-                        </svg>
-                        Running Tests...
-                      </>
-                    ) : (
-                      <>
-                        Run Evaluation
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <polygon points="5 3 19 12 5 21 5 3" />
-                        </svg>
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
             </div>
 
-            {/* Performance Metrics */}
-            <div className="bg-surface-card border border-surface-border rounded-xl p-6">
-              <h2 className="text-base font-semibold text-white mb-4">
-                Performance Metrics
-              </h2>
-
-              <div className="space-y-4">
+            {/* KPI */}
+            <div className="p-4 rounded-lg bg-[#111] border border-[#222]">
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">KPI Metric</h4>
+              <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-gray-400">
-                      Current Accuracy: {currentAccuracy}%
-                    </span>
-                  </div>
-                  <div className="h-3 bg-surface rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-1000 ${currentAccuracy >= 90 ? "bg-accent" : "bg-accent"}`}
-                      style={{ width: `${currentAccuracy}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-600">0%</span>
-                    <div className="relative flex-1 mx-2">
-                      <div
-                        className={`absolute -top-1 w-px h-3 bg-gray-600`}
-                        style={{ right: `${100 - targetValue}%` }}
-                      />
-                      <span
-                        className={`absolute top-3 text-[10px] text-gray-500 -translate-x-1/2`}
-                        style={{ right: `${100 - targetValue}%` }}
-                      >
-                        Target
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-600">100%</span>
-                  </div>
+                  <span className="text-gray-600 text-xs block mb-1">Baseline</span>
+                  <span className="text-gray-200 font-mono text-lg">{baselineValue}%</span>
                 </div>
-
-                <div className="flex items-center justify-between py-2 border-t border-surface-border">
-                  <span className="text-sm text-gray-400">Target:</span>
-                  <span className="text-sm text-white font-medium">
-                    {targetValue}%
-                  </span>
+                <div>
+                  <span className="text-gray-600 text-xs block mb-1">Target</span>
+                  <span className="text-emerald-400 font-mono text-lg">{targetValue}%</span>
                 </div>
-
-                <div className="flex items-center justify-between py-2 border-t border-surface-border">
-                  <span className="text-sm text-gray-400">
-                    Performance vs. Baseline:
-                  </span>
-                  <span className="text-sm text-accent font-medium">
-                    {testResults[0].accuracy !== null
-                      ? `+${(currentAccuracy - baselineValue).toFixed(1)}%`
-                      : "+XX%"}
-                  </span>
+                <div>
+                  <span className="text-gray-600 text-xs block mb-1">Operator</span>
+                  <span className="text-gray-200 font-mono text-lg">{challenge?.comparisonOperator ?? ">="}</span>
                 </div>
               </div>
             </div>
 
-            {/* Validation Test Cases */}
-            <div className="bg-surface-card border border-surface-border rounded-xl p-6">
-              <h2 className="text-base font-semibold text-white mb-4">
-                Validation Test Cases
-              </h2>
-              <div className="space-y-3">
-                {testResults.map((test, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between py-2 border-b border-surface-border/50 last:border-0"
-                  >
-                    <span className="text-sm text-gray-300">{test.name}</span>
-                    <div className="flex items-center gap-3">
-                      {test.accuracy !== null && (
-                        <span
-                          className={`text-sm font-mono ${test.passed ? "text-accent" : "text-yellow-400"}`}
-                        >
-                          {test.accuracy}%
-                        </span>
-                      )}
-                      {test.passed === null ? (
-                        <span className="text-xs text-gray-600 px-2 py-0.5 rounded bg-surface border border-surface-border">
-                          PENDING
-                        </span>
-                      ) : test.passed ? (
-                        <span className="text-xs text-accent px-2 py-0.5 rounded bg-accent/10 border border-accent/20 font-medium">
-                          PASS
-                        </span>
-                      ) : (
-                        <span className="text-xs text-red-400 px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20 font-medium">
-                          FAIL
-                        </span>
-                      )}
-                    </div>
-                  </div>
+            {/* Constraints */}
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-3">Constraints</h3>
+              <ul className="text-sm text-gray-500 space-y-2">
+                {["Base model architecture must remain a transformer or similar", "Inference latency must stay under 200ms per prediction", "Model accuracy must reach at least " + targetValue + "% on hidden test set", "Training must complete within 800 seconds on provided hardware", "Full-stack model evaluation with cached predictions"].map((c, i) => (
+                  <li key={i} className="flex items-start gap-2"><span className="text-gray-700 mt-0.5">&#8226;</span><span>{c}</span></li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-3">Downloads</h3>
+              <div className="flex flex-wrap gap-2">
+                {["Baseline Model v1.2", "Baseline Model v1.3", "Dataset"].map((label) => (
+                  <a key={label} href="#" className="flex items-center gap-2 px-3 py-2 text-xs text-gray-400 bg-[#111] border border-[#222] rounded hover:border-emerald-600/30 hover:text-emerald-400 transition-all">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>
+                    {label}
+                  </a>
                 ))}
               </div>
             </div>
+
+            {/* Checklist */}
+            {challenge?.checklist && Array.isArray(challenge.checklist) && (challenge.checklist as string[]).length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-3">Evaluation Checklist <span className="text-gray-600 font-normal">({(challenge.checklist as string[]).length} items, threshold: {challenge.threshold ?? 70}%)</span></h3>
+                <ul className="text-sm text-gray-500 space-y-1.5">
+                  {(challenge.checklist as string[]).map((item, i) => (
+                    <li key={i} className="flex items-start gap-2"><span className="text-gray-700 font-mono text-xs mt-0.5">{i + 1}.</span><span>{item}</span></li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Bottom accent star decoration */}
-      <div className="fixed bottom-6 right-6">
-        <svg
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          className="text-accent/20"
-        >
-          <path
-            d="M12 2l2.09 6.26L20 10l-5 4.27L16.18 22 12 18.56 7.82 22 9 14.27 4 10l5.91-1.74L12 2z"
-            fill="currentColor"
-          />
-        </svg>
+        {/* ── RIGHT: Action Panel (changes based on phase) ────────────── */}
+        <div className="w-1/2 flex flex-col overflow-hidden">
+          {/* Tab bar */}
+          <div className="flex items-center gap-0 bg-[#111] border-b border-[#222] px-0 shrink-0">
+            <div className={"px-4 py-2.5 text-xs font-medium cursor-pointer " + (phase === "register" ? "text-white bg-black border-b-2 border-emerald-500" : "text-gray-600 hover:text-gray-400")} onClick={() => phase !== "upload" && setPhase("register")}>Register</div>
+            <div className={"px-4 py-2.5 text-xs font-medium cursor-pointer " + (phase === "proposal" ? "text-white bg-black border-b-2 border-emerald-500" : "text-gray-600 hover:text-gray-400")} onClick={() => phase !== "register" && setPhase("proposal")}>Proposal</div>
+            <div className={"px-4 py-2.5 text-xs font-medium " + (phase === "upload" ? "text-white bg-black border-b-2 border-emerald-500 cursor-pointer" : "text-gray-700 cursor-not-allowed")}>Upload</div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6">
+
+            {/* Phase: Register */}
+            {phase === "register" && (
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+                <div className="w-16 h-16 rounded-full bg-[#111] border border-[#222] flex items-center justify-center">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Register for this Challenge</h3>
+                  <p className="text-sm text-gray-500 max-w-sm">Read the challenge description on the left, then register to submit your proposal.</p>
+                </div>
+                {user ? (
+                  <button onClick={() => setPhase("proposal")} className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors">
+                    Register &amp; Continue
+                  </button>
+                ) : (
+                  <button onClick={() => navigate("/login")} className="px-8 py-3 bg-[#111] border border-[#222] text-gray-400 rounded-lg text-sm font-medium hover:border-emerald-600/30 transition-colors">
+                    Log in to participate
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Phase: Proposal */}
+            {phase === "proposal" && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-base font-semibold text-white mb-1">Submit Your Proposal</h3>
+                  <p className="text-xs text-gray-500">Describe your approach. It will be evaluated against the checklist.{challenge?.threshold && <span className="text-gray-400"> Need &ge;{challenge.threshold}% to pass.</span>}</p>
+                </div>
+                <textarea value={proposalText} onChange={(e) => setProposalText(e.target.value)} placeholder="Describe your approach, techniques, methodology, and how you plan to meet each checklist requirement..." rows={12} className="w-full bg-[#111] border border-[#222] rounded-lg p-4 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-emerald-600/40 resize-none font-mono" />
+                <button onClick={handleProposalSubmit} disabled={submitting || !proposalText.trim()} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+                  {submitting ? (<><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 11-6.219-8.56" /></svg>Evaluating...</>) : "Submit Proposal"}
+                </button>
+                {/* Result */}
+                {proposalResult && (
+                  <div className={"p-4 rounded-lg border text-sm " + (proposalResult.decision === "APPROVED" ? "bg-emerald-900/10 border-emerald-600/20 text-emerald-400" : "bg-red-900/10 border-red-500/20 text-red-400")}>
+                    <div className="font-semibold mb-1 flex items-center gap-2">
+                      {proposalResult.decision === "APPROVED" ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                      )}
+                      {proposalResult.decision} &mdash; {proposalResult.percentage}% ({proposalResult.ticked}/{proposalResult.total})
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">{proposalResult.reason}</div>
+                  </div>
+                )}
+                {submitMsg && !proposalResult && (
+                  <div className="p-3 rounded-lg bg-[#111] border border-[#222] text-xs text-gray-400">{submitMsg}</div>
+                )}
+              </div>
+            )}
+
+            {/* Phase: Upload */}
+            {phase === "upload" && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-base font-semibold text-white mb-1">Upload Your Model</h3>
+                  <p className="text-xs text-gray-500">Your proposal was approved. Upload your trained model file below.</p>
+                </div>
+                {!uploadedFile && !isUploading ? (
+                  <div onClick={handleModelUpload} className="border-2 border-dashed border-[#222] rounded-lg p-16 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-600/30 transition-all group">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-700 group-hover:text-emerald-500 transition-colors mb-4"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                    <p className="text-sm text-gray-500 group-hover:text-gray-300 transition-colors">Click to upload your model</p>
+                    <p className="text-xs text-gray-700 mt-1">.h5, .pkl, .pt, .onnx (max 500MB)</p>
+                  </div>
+                ) : isUploading ? (
+                  <div className="space-y-4 py-8">
+                    <div className="flex items-center gap-3">
+                      <svg className="animate-spin text-emerald-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 11-6.219-8.56" /></svg>
+                      <span className="text-sm text-gray-300">Uploading model...</span>
+                      <span className="text-xs text-gray-500 ml-auto font-mono">{Math.min(Math.round(uploadProgress), 100)}%</span>
+                    </div>
+                    <div className="h-1.5 bg-[#111] rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-600 rounded-full transition-all duration-200" style={{ width: Math.min(uploadProgress, 100) + "%" }} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 bg-[#111] rounded-lg border border-emerald-600/20">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                      <div className="flex-1">
+                        <p className="text-sm text-white">{uploadedFile}</p>
+                        <p className="text-xs text-gray-600">42.3 MB &middot; Uploaded successfully</p>
+                      </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                    </div>
+                    <button onClick={() => navigate("/challenge/ml/" + id + "/quiz")} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4" /><path d="M21 12c0 1.2-.4 2.3-1 3.3-1.6 2.7-4.6 4.7-8 4.7s-6.4-2-8-4.7A9 9 0 0112 3c2 0 3.8.6 5.3 1.7" /></svg>
+                      Proceed to Verification Quiz
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
       </div>
     </div>
   );

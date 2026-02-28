@@ -4,6 +4,7 @@ import { createBrowserRouter } from "react-router-dom";
 import DashboardPage from "@/pages/DashboardPage";
 import IDEChallengePage from "@/pages/IDEChallengePage";
 import MLChallengePage from "@/pages/MLChallengePage";
+import MLQuizPage from "@/pages/MLQuizPage";
 import MyProposalsPage from "@/pages/MyProposalsPage";
 import MySubmissionsPage from "@/pages/MySubmissionsPage";
 import CreateChallengePage from "@/pages/CreateChallengePage";
@@ -56,5 +57,9 @@ export const router = createBrowserRouter([
   {
     path: "/challenge/ml/:id",
     element: <MLChallengePage />,
+  },
+  {
+    path: "/challenge/ml/:id/quiz",
+    element: <MLQuizPage />,
   },
 ]);

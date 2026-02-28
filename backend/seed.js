@@ -139,6 +139,39 @@ async function seed() {
   });
   console.log("✅ Frontend Challenge created:", frontendChallenge.id);
 
+  // Create ML Challenge - Claude Sonnet
+  const claudeChallenge = await prisma.challenge.create({
+    data: {
+      postedById: company.id,
+      title: "Increase Claude Sonnet Model",
+      description:
+        "Enhance the Claude Sonnet model's benchmark performance score from 72% to at least 92% across reasoning, coding, and multi-step task completion benchmarks while keeping inference cost under $0.015 per 1K tokens and response latency under 3 seconds.",
+      vertical: "ml",
+      difficulty: "hard",
+      source: "company",
+      baselineValue: 72.0,
+      targetValue: 92.0,
+      comparisonOperator: ">=",
+      checklist: [
+        "Fine-tuning strategy with RLHF / DPO methodology is detailed",
+        "Training data curation and quality filtering pipeline is specified",
+        "Reasoning benchmark improvement plan (MMLU, GSM8K, HumanEval) is included",
+        "Cost-efficiency analysis for inference optimization is provided",
+        "Latency optimization approach (quantization, distillation) is explained",
+        "Evaluation harness and A/B testing methodology is defined",
+        "Safety and alignment guardrails are maintained post-improvement",
+      ],
+      threshold: 70.0,
+      constraints: {
+        maxInferenceCostPer1K: 0.015,
+        maxResponseLatency: 3000,
+        minBenchmarkScore: 92,
+      },
+      status: "open",
+    },
+  });
+  console.log("✅ Claude Sonnet Challenge created:", claudeChallenge.id);
+
   console.log("\n🎉 Seeding complete!");
   console.log("\n📝 Test Accounts:");
   console.log("Company: company@test.com / password123");
