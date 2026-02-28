@@ -13,8 +13,6 @@ export const getChallenges = async (req, res) => {
     if (vertical) where.vertical = vertical;
     if (source) where.source = source;
     if (difficulty) where.difficulty = difficulty;
-
-    // Default to only showing open challenges unless explicitly requested
     where.status = status ?? "open";
 
     const challenges = await prisma.challenge.findMany({
@@ -33,9 +31,7 @@ export const getChallenges = async (req, res) => {
     return res.status(200).json({ success: true, data: { challenges } });
   } catch (error) {
     console.error("[getChallenges]", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "internal server error" });
+    return res.status(500).json({ success: false, message: "internal server error" });
   }
 };
 
@@ -62,12 +58,9 @@ export const getChallengeById = async (req, res) => {
     });
 
     if (!challenge) {
-      return res
-        .status(404)
-        .json({ success: false, message: "challenge not found" });
+      return res.status(404).json({ success: false, message: "challenge not found" });
     }
 
-    // If a logged-in engineer is requesting, attach their progress on this challenge
     let engineerProgress = null;
     const authHeader = req.headers.authorization;
 
@@ -88,16 +81,20 @@ export const getChallengeById = async (req, res) => {
               },
             },
             select: {
-              id: true,
-              status: true,
-              score: true,
-              createdAt: true,
+              id:         true,
+              status:     true,
+              decision:   true,   // ✅ replaced score
+              percentage: true,   // ✅ replaced expectedImprovement
+              ticked:     true,   // ✅ new
+              total:      true,   // ✅ new
+              reason:     true,   // ✅ new
+              createdAt:  true,
               submission: {
                 select: {
-                  id: true,
-                  status: true,
-                  passed: true,
-                  achievedValue: true,
+                  id:              true,
+                  status:          true,
+                  passed:          true,
+                  achievedValue:   true,
                   improvementDelta: true,
                 },
               },
@@ -117,9 +114,7 @@ export const getChallengeById = async (req, res) => {
     });
   } catch (error) {
     console.error("[getChallengeById]", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "internal server error" });
+    return res.status(500).json({ success: false, message: "internal server error" });
   }
 };
 
@@ -141,6 +136,8 @@ export const createChallenge = async (req, res) => {
       targetValue,
       comparisonOperator,
       constraints,
+      checklist,   // ✅ new
+      threshold,   // ✅ new
       repoUrl,
       issueUrl,
     } = req.body;
@@ -163,6 +160,14 @@ export const createChallenge = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: `missing required fields: ${missing.join(", ")}`,
+      });
+    }
+
+    // ✅ Validate checklist
+    if (!checklist || !Array.isArray(checklist) || checklist.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "checklist must be a non-empty array",
       });
     }
 
@@ -197,25 +202,21 @@ export const createChallenge = async (req, res) => {
       });
     }
 
-    // Sanity check — target should represent an improvement over baseline
-    // For >= and > operators, target should be higher; for <= and <, lower
     const improvementCheck = {
       ">=": targetValue > baselineValue,
-      ">": targetValue > baselineValue,
+      ">":  targetValue > baselineValue,
       "<=": targetValue < baselineValue,
-      "<": targetValue < baselineValue,
+      "<":  targetValue < baselineValue,
       "==": true,
     };
 
     if (!improvementCheck[comparisonOperator]) {
       return res.status(400).json({
         success: false,
-        message:
-          "targetValue must represent an improvement over baselineValue for the given operator",
+        message: "targetValue must represent an improvement over baselineValue for the given operator",
       });
     }
 
-    // opensource challenges must have issueUrl
     const resolvedSource = source ?? "company";
     if (resolvedSource === "opensource" && !issueUrl) {
       return res.status(400).json({
@@ -226,19 +227,21 @@ export const createChallenge = async (req, res) => {
 
     const challenge = await prisma.challenge.create({
       data: {
-        postedById: companyId,
-        title: title.trim(),
-        description: description.trim(),
+        postedById:         companyId,
+        title:              title.trim(),
+        description:        description.trim(),
         vertical,
         difficulty,
-        source: resolvedSource,
+        source:             resolvedSource,
         baselineValue,
         targetValue,
         comparisonOperator,
-        constraints: constraints ?? null,
-        repoUrl: repoUrl ?? null,
-        issueUrl: issueUrl ?? null,
-        status: "open",
+        constraints:        constraints ?? null,
+        checklist,                           // ✅ saved here
+        threshold:          threshold ?? 70, // ✅ saved here
+        repoUrl:            repoUrl ?? null,
+        issueUrl:           issueUrl ?? null,
+        status:             "open",
       },
       include: {
         postedBy: {
@@ -254,16 +257,13 @@ export const createChallenge = async (req, res) => {
     });
   } catch (error) {
     console.error("[createChallenge]", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "internal server error" });
+    return res.status(500).json({ success: false, message: "internal server error" });
   }
 };
 
 // ─────────────────────────────────────────────
 // PATCH /api/challenges/:id/status
 // Company role only. Open or close a challenge.
-// Only the company that posted it can update it.
 // ─────────────────────────────────────────────
 export const updateChallengeStatus = async (req, res) => {
   try {
@@ -282,12 +282,9 @@ export const updateChallengeStatus = async (req, res) => {
     const challenge = await prisma.challenge.findUnique({ where: { id } });
 
     if (!challenge) {
-      return res
-        .status(404)
-        .json({ success: false, message: "challenge not found" });
+      return res.status(404).json({ success: false, message: "challenge not found" });
     }
 
-    // Only the company that posted it can close it
     if (challenge.postedById !== companyId) {
       return res.status(403).json({
         success: false,
@@ -318,9 +315,7 @@ export const updateChallengeStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("[updateChallengeStatus]", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "internal server error" });
+    return res.status(500).json({ success: false, message: "internal server error" });
   }
 };
 
@@ -347,29 +342,22 @@ export const getMyChallenges = async (req, res) => {
       },
     });
 
-    // Enrich each challenge with a passing submission count
     const enriched = challenges.map((c) => ({
       ...c,
       passedSubmissionsCount: c.submissions.length,
-      submissions: undefined, // strip raw array from response
+      submissions: undefined,
     }));
 
-    return res
-      .status(200)
-      .json({ success: true, data: { challenges: enriched } });
+    return res.status(200).json({ success: true, data: { challenges: enriched } });
   } catch (error) {
     console.error("[getMyChallenges]", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "internal server error" });
+    return res.status(500).json({ success: false, message: "internal server error" });
   }
 };
 
 // ─────────────────────────────────────────────
 // GET /api/challenges/:id/leaderboard
-// Public. Top passing submissions for a challenge,
-// ordered by improvement delta descending.
-// Powers the per-challenge leaderboard on the UI.
+// Public. Top passing submissions for a challenge.
 // ─────────────────────────────────────────────
 export const getChallengeLeaderboard = async (req, res) => {
   try {
@@ -378,46 +366,48 @@ export const getChallengeLeaderboard = async (req, res) => {
     const challenge = await prisma.challenge.findUnique({
       where: { id },
       select: {
-        id: true,
-        title: true,
-        vertical: true,
+        id:            true,
+        title:         true,
+        vertical:      true,
         baselineValue: true,
-        targetValue: true,
+        targetValue:   true,
+        threshold:     true,  // ✅ new
+        checklist:     true,  // ✅ new
       },
     });
 
     if (!challenge) {
-      return res
-        .status(404)
-        .json({ success: false, message: "challenge not found" });
+      return res.status(404).json({ success: false, message: "challenge not found" });
     }
 
     const topSubmissions = await prisma.submission.findMany({
       where: {
-        challengeId: id,
-        passed: true,
+        challengeId:   id,
+        passed:        true,
         integrityFlag: false,
-        status: "completed",
+        status:        "completed",
       },
       orderBy: { improvementDelta: "desc" },
       take: 10,
       select: {
-        id: true,
-        achievedValue: true,
+        id:               true,
+        achievedValue:    true,
         improvementDelta: true,
         constraintsPassed: true,
-        createdAt: true,
+        createdAt:        true,
         engineer: {
           select: {
-            id: true,
-            name: true,
+            id:        true,
+            name:      true,
             githubUrl: true,
           },
         },
         proposal: {
           select: {
-            score: true,
-            expectedImprovement: true,
+            decision:   true,   // ✅ replaced score
+            percentage: true,   // ✅ replaced expectedImprovement
+            ticked:     true,   // ✅ new
+            total:      true,   // ✅ new
           },
         },
       },
@@ -429,8 +419,6 @@ export const getChallengeLeaderboard = async (req, res) => {
     });
   } catch (error) {
     console.error("[getChallengeLeaderboard]", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "internal server error" });
+    return res.status(500).json({ success: false, message: "internal server error" });
   }
 };

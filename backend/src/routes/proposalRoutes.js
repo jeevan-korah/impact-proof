@@ -1,7 +1,7 @@
 // src/routes/proposal.routes.js
 import { Router } from "express";
 import {
-  createProposal,
+  evaluate,
   getProposalById,
   getProposalStatus,
   getMyProposals,
@@ -12,7 +12,7 @@ import { authenticate, requireRole } from "../middleware/authMiddleware.js";
 const router = Router();
 
 // ── Engineer routes ───────────────────────────────────────────────────────
-router.post("/", authenticate, requireRole("engineer"), createProposal);
+router.post("/", authenticate, requireRole("engineer"), evaluate);
 router.get("/my", authenticate, requireRole("engineer"), getMyProposals);
 router.get("/:id", authenticate, requireRole("engineer"), getProposalById);
 router.get(
