@@ -12,6 +12,7 @@ import MyChallengesPage from "@/pages/MyChallengesPage";
 import CompanyChallengeDetailPage from "@/pages/CompanyChallengeDetailPage";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
+import ProfilePage from "@/pages/ProfilePage";
 
 export const router = createBrowserRouter([
   {
@@ -41,6 +42,10 @@ export const router = createBrowserRouter([
   {
     path: "/create-challenge",
     element: <CreateChallengePage />,
+  },
+   {
+    path: "/profile",
+    element: <ProfilePage />,
   },
   {
     path: "/my-challenges",
