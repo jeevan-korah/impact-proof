@@ -1,11 +1,18 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { getChallenges } from "@/api/challenges.api";
+import type {
+  Challenge,
+  Vertical as BackendVertical,
+} from "@/types/challenge.types";
+import Navbar from "@/components/common/Navbar";
 
-type Vertical = "ai_ml" | "frontend" | "backend" | "fullstack";
+type Vertical = "ai_ml" | "frontend" | "backend" | "fullstack" | "ml";
 type Difficulty = "easy" | "medium" | "hard";
 
 interface Problem {
-  id: number;
+  id: string;
   title: string;
   vertical: Vertical;
   company: string;
@@ -13,11 +20,13 @@ interface Problem {
   kpiMetric: string;
   difficulty: Difficulty;
   progress: number; // 0-100
+  isFromBackend?: boolean;
 }
 
-const problems: Problem[] = [
+// ── Mock data (retained as fallback) ──────────────────────────────────────
+const mockProblems: Problem[] = [
   {
-    id: 1,
+    id: "mock-1",
     title: "ML Model Performance on Edge: Reduce to",
     vertical: "ai_ml",
     company: "NVIDIA",
@@ -27,7 +36,7 @@ const problems: Problem[] = [
     progress: 85,
   },
   {
-    id: 2,
+    id: "mock-2",
     title: "Refactor Legacy Payment Microservice",
     vertical: "backend",
     company: "PayGlobal",
@@ -37,7 +46,7 @@ const problems: Problem[] = [
     progress: 70,
   },
   {
-    id: 3,
+    id: "mock-3",
     title: "Implement GraphQL Schema",
     vertical: "backend",
     company: "Meta",
@@ -47,7 +56,7 @@ const problems: Problem[] = [
     progress: 60,
   },
   {
-    id: 4,
+    id: "mock-4",
     title: "Optimize SVG Rendering Performance",
     vertical: "frontend",
     company: "VectorFlow",
@@ -57,7 +66,7 @@ const problems: Problem[] = [
     progress: 80,
   },
   {
-    id: 5,
+    id: "mock-5",
     title: "ML Model Accuracy Increase to 90%",
     vertical: "ai_ml",
     company: "OpenAI",
@@ -67,7 +76,7 @@ const problems: Problem[] = [
     progress: 55,
   },
   {
-    id: 6,
+    id: "mock-6",
     title: "Fullstack Dev Environment: Replicate UI/UX",
     vertical: "fullstack",
     company: "Neural Dynamics",
@@ -77,7 +86,7 @@ const problems: Problem[] = [
     progress: 40,
   },
   {
-    id: 7,
+    id: "mock-7",
     title: "Bug Fix: Fix React State Race Condition",
     vertical: "fullstack",
     company: "StartupX",
@@ -87,7 +96,7 @@ const problems: Problem[] = [
     progress: 90,
   },
   {
-    id: 8,
+    id: "mock-8",
     title: "ML Model Accuracy Increase to 90%",
     vertical: "ai_ml",
     company: "OpenAI",
@@ -97,7 +106,7 @@ const problems: Problem[] = [
     progress: 45,
   },
   {
-    id: 9,
+    id: "mock-9",
     title: "Improve Lighthouse score from 58 to ≥80",
     vertical: "frontend",
     company: "Acme Corp",
@@ -107,7 +116,7 @@ const problems: Problem[] = [
     progress: 65,
   },
   {
-    id: 10,
+    id: "mock-10",
     title: "Implement GraphQL Schema",
     vertical: "backend",
     company: "Meta",
@@ -117,7 +126,7 @@ const problems: Problem[] = [
     progress: 75,
   },
   {
-    id: 11,
+    id: "mock-11",
     title: "Optimize SVG Rendering Performance",
     vertical: "frontend",
     company: "VectorFlow",
@@ -127,7 +136,7 @@ const problems: Problem[] = [
     progress: 50,
   },
   {
-    id: 12,
+    id: "mock-12",
     title: "Frontend: Fix Button Border Bug",
     vertical: "frontend",
     company: "Vercel",
@@ -140,6 +149,7 @@ const problems: Problem[] = [
 
 const verticalLabel: Record<Vertical, string> = {
   ai_ml: "AI/ML",
+  ml: "AI/ML",
   frontend: "Frontend",
   backend: "Backend",
   fullstack: "Fullstack",
@@ -147,6 +157,7 @@ const verticalLabel: Record<Vertical, string> = {
 
 const verticalColor: Record<Vertical, string> = {
   ai_ml: "bg-purple-600",
+  ml: "bg-purple-600",
   frontend: "bg-blue-600",
   backend: "bg-orange-600",
   fullstack: "bg-teal-600",
@@ -164,9 +175,49 @@ const difficultyLabel: Record<Difficulty, string> = {
   hard: "Hard",
 };
 
+/** Convert a backend Challenge into a Problem row for the table */
+function challengeToProblem(c: Challenge): Problem {
+  const verticalMap: Record<BackendVertical, Vertical> = {
+    ml: "ml",
+    frontend: "frontend",
+    backend: "backend",
+  };
+  return {
+    id: c.id,
+    title: c.title,
+    vertical: verticalMap[c.vertical] ?? "backend",
+    company: c.postedBy?.name ?? "Open Source",
+    companyLogo: (c.postedBy?.name ?? "OS").slice(0, 2).toUpperCase(),
+    kpiMetric: `${c.baselineValue} → ${c.targetValue}`,
+    difficulty: c.difficulty,
+    progress: 0,
+    isFromBackend: true,
+  };
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { user, logout, loading: authLoading } = useAuth();
   const [search, setSearch] = useState("");
+  const [problems, setProblems] = useState<Problem[]>(mockProblems);
+  const [apiLoaded, setApiLoaded] = useState(false);
+
+  // Fetch real challenges from backend, fall back to mocks on error
+  useEffect(() => {
+    getChallenges({ status: "open" })
+      .then((challenges) => {
+        if (challenges && challenges.length > 0) {
+          const backendProblems = challenges.map(challengeToProblem);
+          // Merge: backend challenges first, then mocks as demos
+          setProblems([...backendProblems, ...mockProblems]);
+        }
+        setApiLoaded(true);
+      })
+      .catch(() => {
+        // Backend unreachable — use mock data only
+        setApiLoaded(true);
+      });
+  }, []);
 
   const filtered = problems.filter(
     (p) =>
@@ -176,40 +227,27 @@ export default function DashboardPage() {
   );
 
   const handleProblemClick = (problem: Problem) => {
-    if (problem.vertical === "ai_ml") {
-      navigate(`/challenge/ml/${problem.id}`);
+    if (problem.isFromBackend) {
+      // Navigate to real challenge detail page
+      if (problem.vertical === "ml" || problem.vertical === "ai_ml") {
+        navigate(`/challenge/ml/${problem.id}`);
+      } else {
+        navigate(`/challenge/ide/${problem.id}`);
+      }
     } else {
-      navigate(`/challenge/ide/${problem.id}`);
+      // Mock item — keep existing behaviour
+      if (problem.vertical === "ai_ml") {
+        navigate(`/challenge/ml/${problem.id}`);
+      } else {
+        navigate(`/challenge/ide/${problem.id}`);
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-surface">
       {/* Header */}
-      <header className="border-b border-surface-border px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-accent rounded flex items-center justify-center">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.5"
-            >
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-          </div>
-          <span className="text-lg font-semibold text-white tracking-tight">
-            ImpactProof
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-8 rounded-full bg-surface-card border border-surface-border flex items-center justify-center text-sm text-gray-400">
-            U
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main content */}
       <main className="max-w-6xl mx-auto px-6 py-8">

@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import submissionRoutes from "./routes/submissionRoutes.js";
 import challengeRoutes from "./routes/challengesRoutes.js";
 import proposalRoutes from "./routes/proposalRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
 
 dotenv.config();
 
@@ -22,9 +23,10 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/proposal",proposalRoutes);
+app.use("/api/proposal", proposalRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/challenges", challengeRoutes);
+app.use("/api/profile", profileRoutes);
 
 // Health check
 app.get("/health", (req, res) => res.json({ status: "ok" }));
@@ -41,8 +43,18 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log(`server running on http://localhost:${PORT}`),
-);
+
+// Express 5 returns a Promise from app.listen()
+const startServer = async () => {
+  try {
+    await app.listen(PORT);
+    console.log(`server running on http://localhost:${PORT}`);
+  } catch (err) {
+    console.error("[startup error]", err);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;

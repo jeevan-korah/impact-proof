@@ -29,11 +29,13 @@ export type AggregateChallenge = {
 export type ChallengeAvgAggregateOutputType = {
   baselineValue: number | null
   targetValue: number | null
+  threshold: number | null
 }
 
 export type ChallengeSumAggregateOutputType = {
   baselineValue: number | null
   targetValue: number | null
+  threshold: number | null
 }
 
 export type ChallengeMinAggregateOutputType = {
@@ -47,6 +49,7 @@ export type ChallengeMinAggregateOutputType = {
   baselineValue: number | null
   targetValue: number | null
   comparisonOperator: string | null
+  threshold: number | null
   repoUrl: string | null
   issueUrl: string | null
   status: $Enums.ChallengeStatus | null
@@ -64,6 +67,7 @@ export type ChallengeMaxAggregateOutputType = {
   baselineValue: number | null
   targetValue: number | null
   comparisonOperator: string | null
+  threshold: number | null
   repoUrl: string | null
   issueUrl: string | null
   status: $Enums.ChallengeStatus | null
@@ -82,6 +86,8 @@ export type ChallengeCountAggregateOutputType = {
   targetValue: number
   comparisonOperator: number
   constraints: number
+  checklist: number
+  threshold: number
   repoUrl: number
   issueUrl: number
   status: number
@@ -93,11 +99,13 @@ export type ChallengeCountAggregateOutputType = {
 export type ChallengeAvgAggregateInputType = {
   baselineValue?: true
   targetValue?: true
+  threshold?: true
 }
 
 export type ChallengeSumAggregateInputType = {
   baselineValue?: true
   targetValue?: true
+  threshold?: true
 }
 
 export type ChallengeMinAggregateInputType = {
@@ -111,6 +119,7 @@ export type ChallengeMinAggregateInputType = {
   baselineValue?: true
   targetValue?: true
   comparisonOperator?: true
+  threshold?: true
   repoUrl?: true
   issueUrl?: true
   status?: true
@@ -128,6 +137,7 @@ export type ChallengeMaxAggregateInputType = {
   baselineValue?: true
   targetValue?: true
   comparisonOperator?: true
+  threshold?: true
   repoUrl?: true
   issueUrl?: true
   status?: true
@@ -146,6 +156,8 @@ export type ChallengeCountAggregateInputType = {
   targetValue?: true
   comparisonOperator?: true
   constraints?: true
+  checklist?: true
+  threshold?: true
   repoUrl?: true
   issueUrl?: true
   status?: true
@@ -251,6 +263,8 @@ export type ChallengeGroupByOutputType = {
   targetValue: number
   comparisonOperator: string
   constraints: runtime.JsonValue | null
+  checklist: runtime.JsonValue
+  threshold: number
   repoUrl: string | null
   issueUrl: string | null
   status: $Enums.ChallengeStatus
@@ -292,6 +306,8 @@ export type ChallengeWhereInput = {
   targetValue?: Prisma.FloatFilter<"Challenge"> | number
   comparisonOperator?: Prisma.StringFilter<"Challenge"> | string
   constraints?: Prisma.JsonNullableFilter<"Challenge">
+  checklist?: Prisma.JsonFilter<"Challenge">
+  threshold?: Prisma.FloatFilter<"Challenge"> | number
   repoUrl?: Prisma.StringNullableFilter<"Challenge"> | string | null
   issueUrl?: Prisma.StringNullableFilter<"Challenge"> | string | null
   status?: Prisma.EnumChallengeStatusFilter<"Challenge"> | $Enums.ChallengeStatus
@@ -314,6 +330,8 @@ export type ChallengeOrderByWithRelationInput = {
   targetValue?: Prisma.SortOrder
   comparisonOperator?: Prisma.SortOrder
   constraints?: Prisma.SortOrderInput | Prisma.SortOrder
+  checklist?: Prisma.SortOrder
+  threshold?: Prisma.SortOrder
   repoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   issueUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -339,6 +357,8 @@ export type ChallengeWhereUniqueInput = Prisma.AtLeast<{
   targetValue?: Prisma.FloatFilter<"Challenge"> | number
   comparisonOperator?: Prisma.StringFilter<"Challenge"> | string
   constraints?: Prisma.JsonNullableFilter<"Challenge">
+  checklist?: Prisma.JsonFilter<"Challenge">
+  threshold?: Prisma.FloatFilter<"Challenge"> | number
   repoUrl?: Prisma.StringNullableFilter<"Challenge"> | string | null
   issueUrl?: Prisma.StringNullableFilter<"Challenge"> | string | null
   status?: Prisma.EnumChallengeStatusFilter<"Challenge"> | $Enums.ChallengeStatus
@@ -361,6 +381,8 @@ export type ChallengeOrderByWithAggregationInput = {
   targetValue?: Prisma.SortOrder
   comparisonOperator?: Prisma.SortOrder
   constraints?: Prisma.SortOrderInput | Prisma.SortOrder
+  checklist?: Prisma.SortOrder
+  threshold?: Prisma.SortOrder
   repoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   issueUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -387,6 +409,8 @@ export type ChallengeScalarWhereWithAggregatesInput = {
   targetValue?: Prisma.FloatWithAggregatesFilter<"Challenge"> | number
   comparisonOperator?: Prisma.StringWithAggregatesFilter<"Challenge"> | string
   constraints?: Prisma.JsonNullableWithAggregatesFilter<"Challenge">
+  checklist?: Prisma.JsonWithAggregatesFilter<"Challenge">
+  threshold?: Prisma.FloatWithAggregatesFilter<"Challenge"> | number
   repoUrl?: Prisma.StringNullableWithAggregatesFilter<"Challenge"> | string | null
   issueUrl?: Prisma.StringNullableWithAggregatesFilter<"Challenge"> | string | null
   status?: Prisma.EnumChallengeStatusWithAggregatesFilter<"Challenge"> | $Enums.ChallengeStatus
@@ -404,6 +428,8 @@ export type ChallengeCreateInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -426,6 +452,8 @@ export type ChallengeUncheckedCreateInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -446,6 +474,8 @@ export type ChallengeUpdateInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -468,6 +498,8 @@ export type ChallengeUncheckedUpdateInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -489,6 +521,8 @@ export type ChallengeCreateManyInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -506,6 +540,8 @@ export type ChallengeUpdateManyMutationInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -524,6 +560,8 @@ export type ChallengeUncheckedUpdateManyInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -552,6 +590,8 @@ export type ChallengeCountOrderByAggregateInput = {
   targetValue?: Prisma.SortOrder
   comparisonOperator?: Prisma.SortOrder
   constraints?: Prisma.SortOrder
+  checklist?: Prisma.SortOrder
+  threshold?: Prisma.SortOrder
   repoUrl?: Prisma.SortOrder
   issueUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -561,6 +601,7 @@ export type ChallengeCountOrderByAggregateInput = {
 export type ChallengeAvgOrderByAggregateInput = {
   baselineValue?: Prisma.SortOrder
   targetValue?: Prisma.SortOrder
+  threshold?: Prisma.SortOrder
 }
 
 export type ChallengeMaxOrderByAggregateInput = {
@@ -574,6 +615,7 @@ export type ChallengeMaxOrderByAggregateInput = {
   baselineValue?: Prisma.SortOrder
   targetValue?: Prisma.SortOrder
   comparisonOperator?: Prisma.SortOrder
+  threshold?: Prisma.SortOrder
   repoUrl?: Prisma.SortOrder
   issueUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -591,6 +633,7 @@ export type ChallengeMinOrderByAggregateInput = {
   baselineValue?: Prisma.SortOrder
   targetValue?: Prisma.SortOrder
   comparisonOperator?: Prisma.SortOrder
+  threshold?: Prisma.SortOrder
   repoUrl?: Prisma.SortOrder
   issueUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -600,6 +643,7 @@ export type ChallengeMinOrderByAggregateInput = {
 export type ChallengeSumOrderByAggregateInput = {
   baselineValue?: Prisma.SortOrder
   targetValue?: Prisma.SortOrder
+  threshold?: Prisma.SortOrder
 }
 
 export type ChallengeScalarRelationFilter = {
@@ -726,6 +770,8 @@ export type ChallengeCreateWithoutPostedByInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -746,6 +792,8 @@ export type ChallengeUncheckedCreateWithoutPostedByInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -796,6 +844,8 @@ export type ChallengeScalarWhereInput = {
   targetValue?: Prisma.FloatFilter<"Challenge"> | number
   comparisonOperator?: Prisma.StringFilter<"Challenge"> | string
   constraints?: Prisma.JsonNullableFilter<"Challenge">
+  checklist?: Prisma.JsonFilter<"Challenge">
+  threshold?: Prisma.FloatFilter<"Challenge"> | number
   repoUrl?: Prisma.StringNullableFilter<"Challenge"> | string | null
   issueUrl?: Prisma.StringNullableFilter<"Challenge"> | string | null
   status?: Prisma.EnumChallengeStatusFilter<"Challenge"> | $Enums.ChallengeStatus
@@ -813,6 +863,8 @@ export type ChallengeCreateWithoutProposalsInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -834,6 +886,8 @@ export type ChallengeUncheckedCreateWithoutProposalsInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -869,6 +923,8 @@ export type ChallengeUpdateWithoutProposalsInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -890,6 +946,8 @@ export type ChallengeUncheckedUpdateWithoutProposalsInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -909,6 +967,8 @@ export type ChallengeCreateWithoutSubmissionsInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -930,6 +990,8 @@ export type ChallengeUncheckedCreateWithoutSubmissionsInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -965,6 +1027,8 @@ export type ChallengeUpdateWithoutSubmissionsInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -986,6 +1050,8 @@ export type ChallengeUncheckedUpdateWithoutSubmissionsInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -1005,6 +1071,8 @@ export type ChallengeCreateWithoutImpactRecordsInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -1026,6 +1094,8 @@ export type ChallengeUncheckedCreateWithoutImpactRecordsInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -1061,6 +1131,8 @@ export type ChallengeUpdateWithoutImpactRecordsInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -1082,6 +1154,8 @@ export type ChallengeUncheckedUpdateWithoutImpactRecordsInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -1101,6 +1175,8 @@ export type ChallengeCreateManyPostedByInput = {
   targetValue: number
   comparisonOperator: string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: number
   repoUrl?: string | null
   issueUrl?: string | null
   status?: $Enums.ChallengeStatus
@@ -1118,6 +1194,8 @@ export type ChallengeUpdateWithoutPostedByInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -1138,6 +1216,8 @@ export type ChallengeUncheckedUpdateWithoutPostedByInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -1158,6 +1238,8 @@ export type ChallengeUncheckedUpdateManyWithoutPostedByInput = {
   targetValue?: Prisma.FloatFieldUpdateOperationsInput | number
   comparisonOperator?: Prisma.StringFieldUpdateOperationsInput | string
   constraints?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  checklist?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  threshold?: Prisma.FloatFieldUpdateOperationsInput | number
   repoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   issueUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumChallengeStatusFieldUpdateOperationsInput | $Enums.ChallengeStatus
@@ -1225,6 +1307,8 @@ export type ChallengeSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   targetValue?: boolean
   comparisonOperator?: boolean
   constraints?: boolean
+  checklist?: boolean
+  threshold?: boolean
   repoUrl?: boolean
   issueUrl?: boolean
   status?: boolean
@@ -1248,6 +1332,8 @@ export type ChallengeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   targetValue?: boolean
   comparisonOperator?: boolean
   constraints?: boolean
+  checklist?: boolean
+  threshold?: boolean
   repoUrl?: boolean
   issueUrl?: boolean
   status?: boolean
@@ -1267,6 +1353,8 @@ export type ChallengeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   targetValue?: boolean
   comparisonOperator?: boolean
   constraints?: boolean
+  checklist?: boolean
+  threshold?: boolean
   repoUrl?: boolean
   issueUrl?: boolean
   status?: boolean
@@ -1286,13 +1374,15 @@ export type ChallengeSelectScalar = {
   targetValue?: boolean
   comparisonOperator?: boolean
   constraints?: boolean
+  checklist?: boolean
+  threshold?: boolean
   repoUrl?: boolean
   issueUrl?: boolean
   status?: boolean
   createdAt?: boolean
 }
 
-export type ChallengeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "postedById" | "title" | "description" | "vertical" | "difficulty" | "source" | "baselineValue" | "targetValue" | "comparisonOperator" | "constraints" | "repoUrl" | "issueUrl" | "status" | "createdAt", ExtArgs["result"]["challenge"]>
+export type ChallengeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "postedById" | "title" | "description" | "vertical" | "difficulty" | "source" | "baselineValue" | "targetValue" | "comparisonOperator" | "constraints" | "checklist" | "threshold" | "repoUrl" | "issueUrl" | "status" | "createdAt", ExtArgs["result"]["challenge"]>
 export type ChallengeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   postedBy?: boolean | Prisma.Challenge$postedByArgs<ExtArgs>
   proposals?: boolean | Prisma.Challenge$proposalsArgs<ExtArgs>
@@ -1327,6 +1417,8 @@ export type $ChallengePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     targetValue: number
     comparisonOperator: string
     constraints: runtime.JsonValue | null
+    checklist: runtime.JsonValue
+    threshold: number
     repoUrl: string | null
     issueUrl: string | null
     status: $Enums.ChallengeStatus
@@ -1769,6 +1861,8 @@ export interface ChallengeFieldRefs {
   readonly targetValue: Prisma.FieldRef<"Challenge", 'Float'>
   readonly comparisonOperator: Prisma.FieldRef<"Challenge", 'String'>
   readonly constraints: Prisma.FieldRef<"Challenge", 'Json'>
+  readonly checklist: Prisma.FieldRef<"Challenge", 'Json'>
+  readonly threshold: Prisma.FieldRef<"Challenge", 'Float'>
   readonly repoUrl: Prisma.FieldRef<"Challenge", 'String'>
   readonly issueUrl: Prisma.FieldRef<"Challenge", 'String'>
   readonly status: Prisma.FieldRef<"Challenge", 'ChallengeStatus'>

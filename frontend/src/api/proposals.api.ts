@@ -1,26 +1,36 @@
 // src/api/proposals.api.ts
 
 import { api } from "@/lib/axios";
-import { ApiResponse } from "@/types/api.types";
-import { Proposal } from "@/types/proposal.types";
+import type { ApiResponse } from "@/types/api.types";
+import type { Proposal } from "@/types/proposal.types";
+
+export interface ProposalEvalResult {
+  proposalId: string;
+  evaluation: Record<string, boolean>;
+  ticked: number;
+  total: number;
+  percentage: number;
+  decision: string;
+  reason: string;
+  status: string;
+}
 
 export async function createProposal(data: {
   challengeId: string;
-  diagnosis: string;
-  approach: string;
-  expectedImprovement: number;
+  proposalText: string;
 }) {
-  const res = await api.post<
-    ApiResponse<{ proposalId: string; status: string }>
-  >("/proposals", data);
+  const res = await api.post<ApiResponse<ProposalEvalResult>>(
+    "/proposal",
+    data,
+  );
 
   return res.data.data;
 }
 
 export async function getProposalById(id: string) {
-  const res = await api.get<
-    ApiResponse<{ proposal: Proposal }>
-  >(`/proposals/${id}`);
+  const res = await api.get<ApiResponse<{ proposal: Proposal }>>(
+    `/proposal/${id}`,
+  );
 
   return res.data.data.proposal;
 }
@@ -30,28 +40,28 @@ export async function getProposalStatus(id: string) {
     ApiResponse<{
       id: string;
       status: string;
-      score: number | null;
-      feedback: string | null;
+      decision: string | null;
+      percentage: number | null;
+      ticked: number | null;
+      total: number | null;
+      reason: string | null;
     }>
-  >(`/proposals/${id}/status`);
+  >(`/proposal/${id}/status`);
 
   return res.data.data;
 }
 
 export async function getMyProposals() {
-  const res = await api.get<
-    ApiResponse<{ proposals: Proposal[] }>
-  >("/proposals/my");
+  const res =
+    await api.get<ApiResponse<{ proposals: Proposal[] }>>("/proposal/my");
 
   return res.data.data.proposals;
 }
 
-export async function getProposalsForChallenge(
-  challengeId: string
-) {
-  const res = await api.get<
-    ApiResponse<{ challenge: any; proposals: Proposal[]; stats: any }>
-  >(`/proposals/challenge/${challengeId}`);
+export async function getProposalsForChallenge(challengeId: string) {
+  const res = await api.get<ApiResponse<{ proposals: Proposal[] }>>(
+    `/proposal/challenge/${challengeId}`,
+  );
 
-  return res.data.data;
+  return res.data.data.proposals;
 }

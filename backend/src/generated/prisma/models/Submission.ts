@@ -708,14 +708,6 @@ export type SubmissionUncheckedUpdateOneWithoutProposalNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SubmissionUpdateToOneWithWhereWithoutProposalInput, Prisma.SubmissionUpdateWithoutProposalInput>, Prisma.SubmissionUncheckedUpdateWithoutProposalInput>
 }
 
-export type NullableFloatFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type NullableBoolFieldUpdateOperationsInput = {
   set?: boolean | null
 }

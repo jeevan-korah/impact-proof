@@ -1,7 +1,22 @@
 // src/types/submission.types.ts
 
-import { Challenge } from "./challenge.types";
-import { Proposal } from "./proposal.types";
+import type { Challenge } from "./challenge.types";
+import type { Proposal } from "./proposal.types";
+
+export type SubmissionStatus = "pending" | "completed" | "flagged";
+
+export interface ImpactRecord {
+  id: string;
+  engineerId: string;
+  challengeId: string;
+  submissionId: string;
+  baselineValue: number;
+  achievedValue: number;
+  improvementDelta: number;
+  passed: boolean;
+  integrityFlag: boolean;
+  recordedAt: string;
+}
 
 export interface Submission {
   id: string;
