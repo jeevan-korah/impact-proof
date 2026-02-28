@@ -5,8 +5,8 @@ export default {
     extend: {
       colors: {
         surface: {
-          DEFAULT: "#0d1117",
-          card: "#161b22",
+          DEFAULT: "#000000",
+          card: "#0a0a0a",
           hover: "#1c2333",
           border: "#2a2f3a",
         },
