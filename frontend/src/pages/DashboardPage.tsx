@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { getChallenges } from "@/api/challenges.api";
@@ -7,6 +7,8 @@ import type {
   Vertical as BackendVertical,
 } from "@/types/challenge.types";
 import Navbar from "@/components/common/Navbar";
+import { issues } from "@/data/issues"; // ← import from issues.ts
+import type { Issue } from "@/data/issues";
 
 type Vertical = "ai_ml" | "frontend" | "backend" | "fullstack" | "ml";
 type Difficulty = "easy" | "medium" | "hard";
@@ -21,19 +23,6 @@ interface Problem {
   difficulty: Difficulty;
   progress: number; // 0-100
   isFromBackend?: boolean;
-}
-
-interface Issue {
-  id: number;
-  title: string;
-  tag: string;
-  tagColor: string;
-  company: string;
-  companyLogo: string;
-  kpiMetric: string;
-  difficulty: Difficulty;
-  progress: number;
-  route: string;
 }
 
 // ── Mock data (retained as fallback) ──────────────────────────────────────
@@ -160,21 +149,6 @@ const mockProblems: Problem[] = [
   },
 ];
 
-const issues: Issue[] = [
-  {
-    id: 1,
-    title: "Reduce P99 Latency Spikes in APISIX Prometheus Plugin",
-    tag: "Performance",
-    tagColor: "bg-red-700",
-    company: "Apache",
-    companyLogo: "AP",
-    kpiMetric: "P99 Latency",
-    difficulty: "hard",
-    progress: 12,
-    route: "/challenge/apisix",
-  },
-];
-
 const verticalLabel: Record<Vertical, string> = {
   ai_ml: "AI/ML",
   ml: "AI/ML",
@@ -218,7 +192,7 @@ function challengeToProblem(c: Challenge): Problem {
     vertical: verticalMap[c.vertical] ?? "backend",
     company: c.postedBy?.name ?? "Open Source",
     companyLogo: (c.postedBy?.name ?? "OS").slice(0, 2).toUpperCase(),
-    kpiMetric: `${c.baselineValue} \u2192 ${c.targetValue}`,
+    kpiMetric: `${c.baselineValue} → ${c.targetValue}`,
     difficulty: c.difficulty,
     progress: 0,
     isFromBackend: true,
@@ -264,14 +238,12 @@ export default function DashboardPage() {
 
   const handleProblemClick = (problem: Problem) => {
     if (problem.isFromBackend) {
-      // Navigate to real challenge detail page
       if (problem.vertical === "ml" || problem.vertical === "ai_ml") {
         navigate(`/challenge/ml/${problem.id}`);
       } else {
         navigate(`/challenge/ide/${problem.id}`);
       }
     } else {
-      // Mock item — keep existing behaviour
       if (problem.vertical === "ai_ml") {
         navigate(`/challenge/ml/${problem.id}`);
       } else {
@@ -439,10 +411,10 @@ export default function DashboardPage() {
 
           {/* Open Issues rows */}
           {activeTab === "issues" &&
-            filteredIssues.map((issue, idx) => (
+            filteredIssues.map((issue: Issue, idx: number) => (
               <div
                 key={issue.id}
-                onClick={() => navigate(issue.route)}
+                onClick={() => navigate(`/challenge/issue/${issue.id}`)}
                 className="grid grid-cols-[60px_1fr_180px_160px_100px] gap-4 px-5 py-4 border-b border-surface-border/50 hover:bg-surface-hover cursor-pointer transition-colors group"
               >
                 <span className="text-sm text-gray-500 font-mono">
