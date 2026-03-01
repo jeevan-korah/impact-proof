@@ -23,6 +23,19 @@ interface Problem {
   isFromBackend?: boolean;
 }
 
+interface Issue {
+  id: number;
+  title: string;
+  tag: string;
+  tagColor: string;
+  company: string;
+  companyLogo: string;
+  kpiMetric: string;
+  difficulty: Difficulty;
+  progress: number;
+  route: string;
+}
+
 // ── Mock data (retained as fallback) ──────────────────────────────────────
 const mockProblems: Problem[] = [
   {
@@ -147,6 +160,21 @@ const mockProblems: Problem[] = [
   },
 ];
 
+const issues: Issue[] = [
+  {
+    id: 1,
+    title: "Reduce P99 Latency Spikes in APISIX Prometheus Plugin",
+    tag: "Performance",
+    tagColor: "bg-red-700",
+    company: "Apache",
+    companyLogo: "AP",
+    kpiMetric: "P99 Latency",
+    difficulty: "hard",
+    progress: 12,
+    route: "/challenge/apisix",
+  },
+];
+
 const verticalLabel: Record<Vertical, string> = {
   ai_ml: "AI/ML",
   ml: "AI/ML",
@@ -175,6 +203,7 @@ const difficultyLabel: Record<Difficulty, string> = {
   hard: "Hard",
 };
 
+<<<<<<< HEAD
 /** Convert a backend Challenge into a Problem row for the table */
 function challengeToProblem(c: Challenge): Problem {
   const verticalMap: Record<BackendVertical, Vertical> = {
@@ -194,11 +223,15 @@ function challengeToProblem(c: Challenge): Problem {
     isFromBackend: true,
   };
 }
+=======
+type Tab = "tasks" | "issues";
+>>>>>>> karthik_new_workplace
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, logout, loading: authLoading } = useAuth();
   const [search, setSearch] = useState("");
+<<<<<<< HEAD
   const [problems, setProblems] = useState<Problem[]>(mockProblems);
   const [apiLoaded, setApiLoaded] = useState(false);
 
@@ -218,12 +251,22 @@ export default function DashboardPage() {
         setApiLoaded(true);
       });
   }, []);
+=======
+  const [activeTab, setActiveTab] = useState<Tab>("tasks");
+>>>>>>> karthik_new_workplace
 
-  const filtered = problems.filter(
+  const filteredProblems = problems.filter(
     (p) =>
       p.title.toLowerCase().includes(search.toLowerCase()) ||
       p.company.toLowerCase().includes(search.toLowerCase()) ||
       p.kpiMetric.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const filteredIssues = issues.filter(
+    (i) =>
+      i.title.toLowerCase().includes(search.toLowerCase()) ||
+      i.company.toLowerCase().includes(search.toLowerCase()) ||
+      i.kpiMetric.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleProblemClick = (problem: Problem) => {
@@ -251,11 +294,37 @@ export default function DashboardPage() {
 
       {/* Main content */}
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {/* Title + Search */}
+        {/* Title + Toggle + Search */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-semibold text-white">
-            ImpactProof Dashboard
-          </h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-semibold text-white">
+              ImpactProof Dashboard
+            </h1>
+            {/* Toggle */}
+            <div className="flex items-center bg-surface-card border border-surface-border rounded-lg p-1 gap-1">
+              <button
+                onClick={() => { setActiveTab("tasks"); setSearch(""); }}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === "tasks"
+                    ? "bg-accent text-white"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Open Tasks
+              </button>
+              <button
+                onClick={() => { setActiveTab("issues"); setSearch(""); }}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === "issues"
+                    ? "bg-accent text-white"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Open Issues
+              </button>
+            </div>
+          </div>
+
           <div className="flex items-center gap-3">
             <div className="relative">
               <svg
@@ -277,14 +346,7 @@ export default function DashboardPage() {
               />
             </div>
             <button className="p-2 rounded-lg border border-surface-border hover:bg-surface-hover text-gray-400">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="7" height="7" />
                 <rect x="14" y="3" width="7" height="7" />
                 <rect x="3" y="14" width="7" height="7" />
@@ -292,14 +354,7 @@ export default function DashboardPage() {
               </svg>
             </button>
             <button className="p-2 rounded-lg border border-surface-border hover:bg-surface-hover text-gray-400">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <path d="M3 9h18" />
                 <path d="M9 21V9" />
@@ -319,61 +374,86 @@ export default function DashboardPage() {
             <span className="text-right">Difficulty</span>
           </div>
 
-          {/* Table Body */}
-          {filtered.map((problem, _idx) => (
-            <div
-              key={`${problem.id}-${_idx}`}
-              onClick={() => handleProblemClick(problem)}
-              className="grid grid-cols-[60px_1fr_180px_160px_100px] gap-4 px-5 py-4 border-b border-surface-border/50 hover:bg-surface-hover cursor-pointer transition-colors group"
-            >
-              {/* Number */}
-              <span className="text-sm text-gray-500 font-mono">
-                {_idx + 1}.
-              </span>
-
-              {/* Title + Vertical Tag */}
-              <div className="flex items-center gap-3">
-                <span
-                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${verticalColor[problem.vertical]} text-white leading-none`}
-                >
-                  {verticalLabel[problem.vertical]}
-                </span>
-                <span className="text-sm text-gray-200 group-hover:text-white transition-colors">
-                  {problem.title}
-                </span>
-              </div>
-
-              {/* Company */}
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-surface border border-surface-border flex items-center justify-center text-[10px] font-bold text-gray-400">
-                  {problem.companyLogo}
+          {/* Open Tasks rows */}
+          {activeTab === "tasks" &&
+            filteredProblems.map((problem, idx) => (
+              <div
+                key={`${problem.id}-${idx}`}
+                onClick={() => handleProblemClick(problem)}
+                className="grid grid-cols-[60px_1fr_180px_160px_100px] gap-4 px-5 py-4 border-b border-surface-border/50 hover:bg-surface-hover cursor-pointer transition-colors group"
+              >
+                <span className="text-sm text-gray-500 font-mono">{idx + 1}.</span>
+                <div className="flex items-center gap-3">
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${verticalColor[problem.vertical]} text-white leading-none`}>
+                    {verticalLabel[problem.vertical]}
+                  </span>
+                  <span className="text-sm text-gray-200 group-hover:text-white transition-colors">
+                    {problem.title}
+                  </span>
                 </div>
-                <span className="text-sm text-gray-400">{problem.company}</span>
-              </div>
-
-              {/* KPI Metric */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-400">
-                  {problem.kpiMetric}
-                </span>
-                <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden max-w-[60px]">
-                  <div
-                    className="h-full bg-accent rounded-full"
-                    style={{ width: `${problem.progress}%` }}
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded bg-surface border border-surface-border flex items-center justify-center text-[10px] font-bold text-gray-400">
+                    {problem.companyLogo}
+                  </div>
+                  <span className="text-sm text-gray-400">{problem.company}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-400">{problem.kpiMetric}</span>
+                  <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden max-w-[60px]">
+                    <div className="h-full bg-accent rounded-full" style={{ width: `${problem.progress}%` }} />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className={`text-sm font-medium ${difficultyColor[problem.difficulty]}`}>
+                    {difficultyLabel[problem.difficulty]}
+                  </span>
                 </div>
               </div>
+            ))}
 
-              {/* Difficulty */}
-              <div className="text-right">
-                <span
-                  className={`text-sm font-medium ${difficultyColor[problem.difficulty]}`}
-                >
-                  {difficultyLabel[problem.difficulty]}
-                </span>
+          {/* Open Issues rows */}
+          {activeTab === "issues" &&
+            filteredIssues.map((issue, idx) => (
+              <div
+                key={issue.id}
+                onClick={() => navigate(issue.route)}
+                className="grid grid-cols-[60px_1fr_180px_160px_100px] gap-4 px-5 py-4 border-b border-surface-border/50 hover:bg-surface-hover cursor-pointer transition-colors group"
+              >
+                <span className="text-sm text-gray-500 font-mono">{idx + 1}.</span>
+                <div className="flex items-center gap-3">
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${issue.tagColor} text-white leading-none`}>
+                    {issue.tag}
+                  </span>
+                  <span className="text-sm text-gray-200 group-hover:text-white transition-colors">
+                    {issue.title}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded bg-surface border border-surface-border flex items-center justify-center text-[10px] font-bold text-gray-400">
+                    {issue.companyLogo}
+                  </div>
+                  <span className="text-sm text-gray-400">{issue.company}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-400">{issue.kpiMetric}</span>
+                  <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden max-w-[60px]">
+                    <div className="h-full bg-accent rounded-full" style={{ width: `${issue.progress}%` }} />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className={`text-sm font-medium ${difficultyColor[issue.difficulty]}`}>
+                    {difficultyLabel[issue.difficulty]}
+                  </span>
+                </div>
               </div>
+            ))}
+
+          {/* Empty state */}
+          {activeTab === "issues" && filteredIssues.length === 0 && (
+            <div className="px-5 py-12 text-center text-gray-500 text-sm">
+              No issues found.
             </div>
-          ))}
+          )}
         </div>
       </main>
     </div>

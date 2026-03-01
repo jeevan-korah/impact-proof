@@ -1,5 +1,4 @@
 // src/app/router.tsx
-
 import { createBrowserRouter } from "react-router-dom";
 import DashboardPage from "@/pages/DashboardPage";
 import IDEChallengePage from "@/pages/IDEChallengePage";
@@ -13,6 +12,7 @@ import CompanyChallengeDetailPage from "@/pages/CompanyChallengeDetailPage";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
 import ProfilePage from "@/pages/ProfilePage";
+import ApisixchallengePage from "@/pages/Apisixchallenge";
 
 export const router = createBrowserRouter([
   {
@@ -66,5 +66,9 @@ export const router = createBrowserRouter([
   {
     path: "/challenge/ml/:id/quiz",
     element: <MLQuizPage />,
+  },
+  {
+    path: "/challenge/apisix",
+    element: <ApisixchallengePage />,
   },
 ]);
