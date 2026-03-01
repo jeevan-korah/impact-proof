@@ -27,8 +27,19 @@ const upload = multer({
 });
 
 // ── Engineer routes ───────────────────────────────────────────────────────
-router.post("/", authenticate, requireRole("engineer"), upload.single("proposalFile"), evaluate);
-router.post("/quiz/generate", authenticate, requireRole("engineer"), generateQuiz);
+router.post(
+  "/",
+  authenticate,
+  requireRole("engineer"),
+  upload.single("proposalFile"),
+  evaluate,
+);
+router.post(
+  "/quiz/generate",
+  authenticate,
+  requireRole("engineer"),
+  generateQuiz,
+);
 router.get("/my", authenticate, requireRole("engineer"), getMyProposals);
 router.get("/:id", authenticate, requireRole("engineer"), getProposalById);
 router.get(

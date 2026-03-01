@@ -17,7 +17,12 @@ export async function evaluate(req, res) {
   }
 
   if (!proposalText || !proposalText.trim()) {
-    return res.status(400).json({ error: "proposalText is required (either in body or uploaded as .txt file)" });
+    return res
+      .status(400)
+      .json({
+        error:
+          "proposalText is required (either in body or uploaded as .txt file)",
+      });
   }
   if (!challengeId) {
     return res.status(400).json({ error: "challengeId is required" });
@@ -56,11 +61,9 @@ export async function evaluate(req, res) {
     });
 
     if (existing) {
-      return res
-        .status(409)
-        .json({
-          error: "You have already submitted a proposal for this challenge",
-        });
+      return res.status(409).json({
+        error: "You have already submitted a proposal for this challenge",
+      });
     }
 
     // 3. Run evaluation via Ollama using company's checklist + threshold
@@ -233,11 +236,20 @@ export async function generateQuiz(req, res) {
     });
 
     if (!proposal) {
-      return res.status(404).json({ error: "No proposal found for this challenge. Submit a proposal first." });
+      return res
+        .status(404)
+        .json({
+          error:
+            "No proposal found for this challenge. Submit a proposal first.",
+        });
     }
 
     if (proposal.decision !== "APPROVED") {
-      return res.status(400).json({ error: "Your proposal must be approved before taking the quiz." });
+      return res
+        .status(400)
+        .json({
+          error: "Your proposal must be approved before taking the quiz.",
+        });
     }
 
     // 3. Generate questions via Grok (or mock fallback)
@@ -263,6 +275,11 @@ export async function generateQuiz(req, res) {
     });
   } catch (error) {
     console.error("[generateQuiz] error:", error);
-    return res.status(500).json({ error: "Failed to generate quiz questions", details: error.message });
+    return res
+      .status(500)
+      .json({
+        error: "Failed to generate quiz questions",
+        details: error.message,
+      });
   }
 }

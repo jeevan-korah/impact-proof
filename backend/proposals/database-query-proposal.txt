@@ -1,0 +1,320 @@
+Proposal: Optimize Database Query Performance to <150ms P95
+
+OBJECTIVE:
+Optimize critical database queries to reduce P95 response time from 850ms to under 150ms for the user analytics dashboard.
+
+INDEX OPTIMIZATION STRATEGY:
+- Audit current indexes:
+  * Identify missing indexes via EXPLAIN ANALYZE
+  * Remove unused/redundant indexes
+  * Consolidate overlapping indexes
+
+- Create composite indexes:
+  ```sql
+  -- User analytics query optimization
+  CREATE INDEX idx_events_user_time ON events(user_id, event_timestamp DESC, event_type);
+  CREATE INDEX idx_sessions_user_date ON sessions(user_id, session_date) INCLUDE (duration, page_views);
+  CREATE INDEX idx_conversions_date_status ON conversions(conversion_date, status) WHERE status = 'completed';
+  ```
+
+- Partial indexes for filtered queries:
+  ```sql
+  CREATE INDEX idx_active_users ON users(created_at) WHERE status = 'active';
+  ```
+
+- Index maintenance:
+  * REINDEX weekly during low-traffic hours
+  * Monitor index bloat
+  * Auto-vacuum configuration tuning
+
+QUERY EXECUTION PLAN ANALYSIS:
+- Use EXPLAIN ANALYZE for all dashboard queries
+- Identify bottlenecks:
+  * Sequential scans on large tables
+  * Nested loops instead of hash joins
+  * Sort operations without indexes
+  * Suboptimal join order
+
+Example analysis:
+```sql
+EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+SELECT 
+    u.user_id,
+    COUNT(DISTINCT e.session_id) as sessions,
+    SUM(e.duration) as total_time,
+    COUNT(CASE WHEN e.event_type = 'conversion' THEN 1 END) as conversions
+FROM users u
+LEFT JOIN events e ON u.user_id = e.user_id
+WHERE e.event_timestamp >= NOW() - INTERVAL '30 days'
+GROUP BY u.user_id;
+```
+
+Optimization applied:
+```sql
+-- Optimized version with proper indexing and filtering
+WITH recent_events AS (
+    SELECT user_id, session_id, duration, event_type
+    FROM events
+    WHERE event_timestamp >= NOW() - INTERVAL '30 days'
+)
+SELECT 
+    u.user_id,
+    COUNT(DISTINCT re.session_id) as sessions,
+    SUM(re.duration) as total_time,
+    COUNT(*) FILTER (WHERE re.event_type = 'conversion') as conversions
+FROM users u
+LEFT JOIN recent_events re ON u.user_id = re.user_id
+GROUP BY u.user_id;
+```
+
+DENORMALIZATION APPROACH WHERE APPLICABLE:
+- Identify frequently joined tables:
+  * users + profiles + preferences (4-way join)
+  * events + sessions + users (3-way join)
+
+- Create aggregated materialized views:
+  ```sql
+  CREATE MATERIALIZED VIEW user_analytics_summary AS
+  SELECT 
+      u.user_id,
+      u.email,
+      u.created_at,
+      p.subscription_tier,
+      COUNT(DISTINCT e.session_id) as lifetime_sessions,
+      SUM(e.duration) as lifetime_duration,
+      MAX(e.event_timestamp) as last_activity,
+      COUNT(*) FILTER (WHERE e.event_type = 'conversion') as total_conversions
+  FROM users u
+  LEFT JOIN profiles p ON u.user_id = p.user_id
+  LEFT JOIN events e ON u.user_id = e.user_id
+  GROUP BY u.user_id, u.email, u.created_at, p.subscription_tier;
+  
+  CREATE UNIQUE INDEX ON user_analytics_summary(user_id);
+  ```
+
+- Refresh strategy:
+  * REFRESH MATERIALIZED VIEW CONCURRENTLY every 5 minutes
+  * Incremental updates via triggers for critical fields
+  * Background job for consistency checks
+
+- Add redundant columns for hot paths:
+  ```sql
+  ALTER TABLE orders ADD COLUMN user_email TEXT;
+  UPDATE orders o SET user_email = u.email FROM users u WHERE o.user_id = u.user_id;
+  CREATE INDEX idx_orders_email ON orders(user_email);
+  ```
+
+CACHING LAYER DESIGN:
+- Redis caching strategy:
+  * Cache frequently accessed aggregations
+  * TTL: 5 minutes for analytics data
+  * Cache warming on application startup
+  * Write-through for real-time updates
+
+```python
+import redis
+import hashlib
+import json
+
+class QueryCache:
+    def __init__(self):
+        self.redis = redis.Redis(host='localhost', port=6379, db=0)
+        self.default_ttl = 300  # 5 minutes
+    
+    def cache_key(self, query, params):
+        # Generate unique key from query + params
+        key_data = f"{query}:{json.dumps(params, sort_keys=True)}"
+        return f"query:{hashlib.md5(key_data.encode()).hexdigest()}"
+    
+    async def get_or_execute(self, query, params, executor):
+        cache_key = self.cache_key(query, params)
+        
+        # Try cache first
+        cached = self.redis.get(cache_key)
+        if cached:
+            return json.loads(cached)
+        
+        # Execute query
+        result = await executor(query, params)
+        
+        # Cache result
+        self.redis.setex(
+            cache_key,
+            self.default_ttl,
+            json.dumps(result, default=str)
+        )
+        
+        return result
+```
+
+- Application-level query result caching
+- Postgres shared_buffers tuning
+- Operating system page cache optimization
+
+CONNECTION POOLING CONFIGURATION:
+- Current issue: Connection overhead (~50ms per connection)
+- PgBouncer configuration:
+  ```ini
+  [databases]
+  analytics = host=localhost port=5432 dbname=analytics
+  
+  [pgbouncer]
+  pool_mode = transaction
+  max_client_conn = 1000
+  default_pool_size = 50
+  reserve_pool_size = 10
+  reserve_pool_timeout = 3
+  server_idle_timeout = 600
+  ```
+
+- Application-side pooling:
+  ```python
+  from sqlalchemy import create_engine
+  from sqlalchemy.pool import QueuePool
+  
+  engine = create_engine(
+      'postgresql://user:pass@localhost/analytics',
+      poolclass=QueuePool,
+      pool_size=20,
+      max_overflow=10,
+      pool_pre_ping=True,  # Check connection health
+      pool_recycle=3600,   # Recycle after 1 hour
+      echo_pool=True       # Debug pool behavior
+  )
+  ```
+
+QUERY BATCHING AND AGGREGATION STRATEGY:
+- Batch similar queries:
+  ```python
+  # Before: N+1 query problem
+  for user_id in user_ids:
+      user_data = db.query("SELECT * FROM users WHERE id = %s", (user_id,))
+  
+  # After: Single batch query
+  user_data = db.query(
+      "SELECT * FROM users WHERE id = ANY(%s)",
+      (user_ids,)
+  )
+  ```
+
+- DataLoader pattern for GraphQL:
+  ```python
+  from aiodataloader import DataLoader
+  
+  class UserLoader(DataLoader):
+      async def batch_load_fn(self, user_ids):
+          query = "SELECT * FROM users WHERE id = ANY(%s)"
+          users = await db.fetch_all(query, (user_ids,))
+          # Return in same order as requested
+          user_map = {u['id']: u for u in users}
+          return [user_map.get(uid) for uid in user_ids]
+  ```
+
+- Pre-aggregate common metrics:
+  ```sql
+  CREATE TABLE daily_user_metrics (
+      user_id UUID,
+      metric_date DATE,
+      sessions_count INT,
+      total_duration INT,
+      conversions_count INT,
+      PRIMARY KEY (user_id, metric_date)
+  );
+  
+  -- Incremental aggregation via trigger
+  CREATE OR REPLACE FUNCTION update_daily_metrics()
+  RETURNS TRIGGER AS $$
+  BEGIN
+      INSERT INTO daily_user_metrics (user_id, metric_date, sessions_count, total_duration, conversions_count)
+      VALUES (
+          NEW.user_id,
+          DATE(NEW.event_timestamp),
+          1,
+          NEW.duration,
+          CASE WHEN NEW.event_type = 'conversion' THEN 1 ELSE 0 END
+      )
+      ON CONFLICT (user_id, metric_date) DO UPDATE SET
+          sessions_count = daily_user_metrics.sessions_count + 1,
+          total_duration = daily_user_metrics.total_duration + EXCLUDED.total_duration,
+          conversions_count = daily_user_metrics.conversions_count + EXCLUDED.conversions_count;
+      RETURN NEW;
+  END;
+  $$ LANGUAGE plpgsql;
+  ```
+
+PERFORMANCE TESTING METHODOLOGY:
+- Benchmark current state:
+  ```bash
+  # pgbench for load testing
+  pgbench -c 50 -j 4 -T 300 -r analytics_db
+  ```
+
+- Custom test harness:
+  ```python
+  import asyncio
+  import time
+  import numpy as np
+  
+  async def benchmark_query(query, params, iterations=1000):
+      latencies = []
+      
+      for i in range(iterations):
+          start = time.time()
+          await db.execute(query, params)
+          latency = (time.time() - start) * 1000  # ms
+          latencies.append(latency)
+      
+      return {
+          'p50': np.percentile(latencies, 50),
+          'p95': np.percentile(latencies, 95),
+          'p99': np.percentile(latencies, 99),
+          'mean': np.mean(latencies),
+          'max': np.max(latencies)
+      }
+  ```
+
+- Metrics tracked:
+  * P50, P95, P99 latencies
+  * Query throughput (QPS)
+  * Database CPU/memory usage
+  * Connection pool statistics
+  * Cache hit rate
+
+- Load testing scenarios:
+  * Normal load: 100 QPS
+  * Peak load: 500 QPS
+  * Stress test: 1000 QPS
+
+DATABASE CONFIGURATION TUNING:
+```sql
+-- PostgreSQL configuration optimizations
+ALTER SYSTEM SET shared_buffers = '8GB';
+ALTER SYSTEM SET effective_cache_size = '24GB';
+ALTER SYSTEM SET work_mem = '64MB';
+ALTER SYSTEM SET maintenance_work_mem = '512MB';
+ALTER SYSTEM SET random_page_cost = 1.1;  -- For SSD
+ALTER SYSTEM SET effective_io_concurrency = 200;
+ALTER SYSTEM SET max_connections = 200;
+ALTER SYSTEM SET max_parallel_workers_per_gather = 4;
+
+-- Autovacuum tuning
+ALTER SYSTEM SET autovacuum_max_workers = 4;
+ALTER SYSTEM SET autovacuum_naptime = '30s';
+```
+
+EXPECTED RESULTS:
+- P50 latency: 45ms (current: 320ms)
+- P95 latency: 135ms (current: 850ms) ✓ below 150ms target
+- P99 latency: 280ms (current: 1200ms)
+- Query throughput: 800 QPS (current: 150 QPS)
+- Database CPU: 45% (current: 85%)
+- Cache hit rate: 92%
+- Zero data integrity issues
+- Zero downtime deployment
+
+MONITORING AND ALERTING:
+- pg_stat_statements for query analysis
+- Datadog/New Relic for APM
+- Custom dashboards for P95 latency
+- Alert if P95 > 200ms for 5 minutes
+- Weekly performance review meetings

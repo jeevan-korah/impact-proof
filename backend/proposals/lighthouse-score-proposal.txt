@@ -1,0 +1,184 @@
+Proposal: Improve Lighthouse Score from 58 to ≥80
+
+OBJECTIVE:
+Optimize web application to improve Lighthouse performance score from 58 to at least 80.
+
+CODE SPLITTING STRATEGY:
+- Route-based code splitting using React.lazy() and Suspense
+- Split vendor bundles from application code
+- Dynamic imports for heavy components (charts, modals)
+- Separate critical CSS from non-critical
+- Load third-party scripts asynchronously
+- Tree-shaking to eliminate unused code
+
+Implementation:
+```javascript
+const Dashboard = React.lazy(() => import('./Dashboard'));
+const Analytics = React.lazy(() => import('./Analytics'));
+
+// Webpack configuration
+optimization: {
+  splitChunks: {
+    chunks: 'all',
+    cacheGroups: {
+      vendor: {
+        test: /[\\/]node_modules[\\/]/,
+        name: 'vendors',
+        priority: 10
+      },
+      common: {
+        minChunks: 2,
+        priority: 5,
+        reuseExistingChunk: true
+      }
+    }
+  }
+}
+```
+
+IMAGE OPTIMIZATION TECHNIQUES:
+- Convert images to WebP format with JPEG fallback
+- Implement responsive images with srcset
+- Lazy loading for below-the-fold images
+- Use next-gen formats (AVIF where supported)
+- Compress images with ImageMagick (quality: 85)
+- Implement blurhash placeholders
+- CDN delivery with automatic optimization
+
+```html
+<picture>
+  <source srcset="hero.avif" type="image/avif">
+  <source srcset="hero.webp" type="image/webp">
+  <img src="hero.jpg" loading="lazy" decoding="async" alt="Hero">
+</picture>
+```
+
+CSS OPTIMIZATION APPROACH:
+- Remove unused CSS with PurgeCSS
+- Inline critical CSS in <head>
+- Defer non-critical CSS loading
+- Minify CSS files
+- Use CSS containment for performance
+- Avoid @import in CSS files
+- Implement CSS-in-JS code splitting
+
+```javascript
+// Critical CSS extraction
+const criticalCSS = await generateCriticalCSS(html);
+html = html.replace('</head>', `<style>${criticalCSS}</style></head>`);
+```
+
+JAVASCRIPT BUNDLE SIZE REDUCTION PLAN:
+- Current bundle: ~850KB (gzipped)
+- Target bundle: <200KB (gzipped)
+- Actions:
+  * Remove moment.js (use date-fns instead) - saves 65KB
+  * Replace lodash with lodash-es - saves 40KB
+  * Remove unused dependencies
+  * Lazy load heavy libraries (charts, pdf viewer)
+  * Use Preact alias for React in production - saves 30KB
+  * Enable Brotli compression
+
+```javascript
+// Webpack bundle analyzer
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+plugins: [
+  new BundleAnalyzerPlugin({
+    analyzerMode: 'static',
+    reportFilename: 'bundle-report.html'
+  })
+]
+```
+
+CACHING STRATEGY:
+- Service Worker for offline-first experience
+- Cache-Control headers:
+  * HTML: no-cache
+  * JS/CSS: 1 year with hashed filenames
+  * Images: 1 month
+- IndexedDB for large data caching
+- LocalStorage for user preferences
+- Implement stale-while-revalidate strategy
+
+```javascript
+// Service Worker
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request).then((fetchResponse) => {
+        return caches.open('dynamic-v1').then((cache) => {
+          cache.put(event.request, fetchResponse.clone());
+          return fetchResponse;
+        });
+      });
+    })
+  );
+});
+```
+
+FIRST CONTENTFUL PAINT (FCP) TARGET:
+- Current FCP: 2.8s
+- Target FCP: <1.2s (target specified in constraints)
+- Optimizations:
+  * Inline critical CSS
+  * Preconnect to required origins
+  * Font display: swap
+  * Reduce server response time to <200ms
+  * Eliminate render-blocking resources
+  * Use resource hints (preload, prefetch)
+
+```html
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preload" as="font" href="/fonts/main.woff2" crossorigin>
+  <style>
+    /* Critical CSS inlined here */
+    .hero { display: flex; }
+  </style>
+</head>
+```
+
+TIME TO INTERACTIVE (TTI) IMPROVEMENT:
+- Current TTI: 5.2s
+- Target TTI: <2.5s (constraint specified)
+- Strategies:
+  * Reduce JavaScript execution time
+  * Code splitting to load only necessary JS
+  * Defer non-critical scripts
+  * Use Web Workers for heavy computations
+  * Reduce main thread work
+  * Minimize long tasks (>50ms)
+
+PERFORMANCE BUDGET:
+- Total page weight: <2MB
+- JavaScript: <300KB (gzipped)
+- CSS: <50KB (gzipped)
+- Images: <1.5MB (lazy loaded)
+- Fonts: <100KB
+- First Load JS: <200KB
+
+IMPLEMENTATION CHECKLIST:
+✓ Enable compression (Brotli/Gzip)
+✓ Minify HTML/CSS/JS
+✓ Optimize images (WebP, lazy loading)
+✓ Implement code splitting
+✓ Add Service Worker
+✓ Inline critical CSS
+✓ Use CDN for static assets
+✓ Reduce third-party scripts
+✓ Optimize web fonts
+✓ Enable HTTP/2
+
+MONITORING:
+- Lighthouse CI in deployment pipeline
+- Real User Monitoring (RUM) with Google Analytics
+- Track Core Web Vitals: LCP, FID, CLS
+- Alert if score drops below 75
+
+EXPECTED RESULTS:
+- Lighthouse Performance: 85-90
+- FCP: 1.0s
+- TTI: 2.2s
+- Bundle size: 180KB (gzipped)
+- 70% faster page load

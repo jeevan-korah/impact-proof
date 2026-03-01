@@ -1,8 +1,9 @@
 // src/services/grokService.js
-// Generates quiz questions from the challenge problem + proposal text using Grok API.
-// Falls back to mock generation when the API key is missing or Grok is unreachable.
+// Generates quiz questions from the challenge problem + proposal text using Groq API.
+// Falls back to mock generation when the API key is missing or Groq is unreachable.
 
-const GROK_API_URL = "https://api.x.ai/v1/chat/completions";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 /**
  * Generate quiz questions from problem description + proposal content.
@@ -18,68 +19,118 @@ export async function generateQuizQuestions({
   proposalText,
   count = 10,
 }) {
-  const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (!apiKey) {
-    console.warn("[grokService] No GROK_API_KEY set — using mock question generator");
-    return { questions: mockGenerateQuestions(problemDescription, proposalText, count), source: "mock" };
+    console.warn(
+      "[groqService] No GROQ_API_KEY set — using mock question generator",
+    );
+    return {
+      questions: mockGenerateQuestions(problemDescription, proposalText, count),
+      source: "mock",
+    };
   }
 
   try {
-    const response = await fetch(GROK_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "grok-3-mini",
-        messages: [
-          { role: "system", content: buildSystemPrompt(count) },
-          { role: "user", content: buildUserPrompt(problemDescription, proposalText, count) },
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" },
-      }),
-    });
+    const prompt = buildFullPrompt(problemDescription, proposalText, count);
+
+    console.log("[groqService] Sending proposal to Groq API...");
+    console.log("[groqService] Proposal length:", proposalText.length, "chars");
+    console.log("[groqService] Model:", GROQ_MODEL);
+
+    // Retry up to 3 times for rate-limit (429)
+    let response;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      response = await fetch(GROQ_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          messages: [
+            {
+              role: "system",
+              content: "You are a technical interview question generator. You MUST respond with valid JSON only, no markdown, no extra text.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          temperature: 0.3,
+          max_tokens: 4096,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (response.status === 429 && attempt < 3) {
+        console.warn(
+          `[groqService] Rate limited (429), retrying in ${attempt * 2}s... (attempt ${attempt}/3)`,
+        );
+        await new Promise((r) => setTimeout(r, attempt * 2000));
+        continue;
+      }
+      break;
+    }
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("[grokService] Grok API error:", response.status, errText);
-      throw new Error(`Grok API returned ${response.status}`);
+      console.error(
+        "[groqService] Groq API error:",
+        response.status,
+        errText,
+      );
+      throw new Error(`Groq API returned ${response.status}`);
     }
 
     const data = await response.json();
     const raw = data.choices?.[0]?.message?.content ?? "";
-    const parsed = JSON.parse(raw);
+
+    // Extract JSON from response (LLM might wrap it in markdown code blocks)
+    let jsonText = raw;
+    const jsonMatch =
+      raw.match(/```json\s*([\s\S]*?)\s*```/) ||
+      raw.match(/```\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      jsonText = jsonMatch[1];
+    }
+
+    const parsed = JSON.parse(jsonText);
 
     // Normalise and validate
     const questions = (parsed.questions || []).slice(0, count).map((q, i) => ({
       id: i + 1,
       question: q.question,
       answer: q.answer,
-      keywords: Array.isArray(q.keywords) ? q.keywords.map((k) => k.toLowerCase()) : extractKeywords(q.answer),
+      keywords: Array.isArray(q.keywords)
+        ? q.keywords.map((k) => k.toLowerCase())
+        : extractKeywords(q.answer),
     }));
 
-    // Console.log answers for debugging (as requested)
-    console.log("\n🧠 [grokService] Generated quiz answers (for debugging):");
+    // Console.log answers for debugging
+    console.log("\n🧠 [groqService] Generated quiz answers (for debugging):");
     questions.forEach((q) => {
       console.log(`  Q${q.id}: ${q.question}`);
       console.log(`   → Answer: ${q.answer}`);
       console.log(`   → Keywords: [${q.keywords.join(", ")}]`);
     });
 
-    return { questions, source: "grok" };
+    return { questions, source: "groq" };
   } catch (error) {
-    console.error("[grokService] Failed to call Grok API:", error.message);
-    console.warn("[grokService] Falling back to mock question generator");
-    return { questions: mockGenerateQuestions(problemDescription, proposalText, count), source: "mock" };
+    console.error("[groqService] Failed to call Groq API:", error.message);
+    console.warn("[groqService] Falling back to mock question generator");
+    return {
+      questions: mockGenerateQuestions(problemDescription, proposalText, count),
+      source: "mock",
+    };
   }
 }
 
-// ─── Prompt builders ──────────────────────────────────────────────────────────
+// ─── Prompt builder ───────────────────────────────────────────────────────────
 
-function buildSystemPrompt(count) {
+function buildFullPrompt(problemDescription, proposalText, count) {
   return `You are a technical interview question generator for an engineering challenge platform.
 Your job is to generate ${count} verification questions that test whether the person actually wrote the proposal / code they submitted.
 
@@ -90,11 +141,9 @@ Rules:
 - Some questions should be about specific code/architecture choices mentioned in the proposal
 - Each question should be answerable in 1-2 sentences
 - Generate a concise correct answer and relevant keywords for automated checking
-- RESPOND ONLY WITH VALID JSON`;
-}
+- RESPOND ONLY WITH VALID JSON
 
-function buildUserPrompt(problemDescription, proposalText, count) {
-  return `## Challenge Problem
+## Challenge Problem
 ${problemDescription}
 
 ## Submitted Proposal (may include code)
@@ -134,47 +183,132 @@ function mockGenerateQuestions(problemDescription, proposalText, count) {
     },
     {
       q: "What specific optimization or improvement technique did you propose?",
-      keywords: findTermsMatching(combined, ["optim", "improv", "enhanc", "reduc", "increas"]),
+      keywords: findTermsMatching(combined, [
+        "optim",
+        "improv",
+        "enhanc",
+        "reduc",
+        "increas",
+      ]),
     },
     {
       q: "How did you plan to validate or evaluate the results of your approach?",
-      keywords: findTermsMatching(combined, ["validat", "evaluat", "test", "benchmark", "metric", "f1", "accuracy", "latency"]),
+      keywords: findTermsMatching(combined, [
+        "validat",
+        "evaluat",
+        "test",
+        "benchmark",
+        "metric",
+        "f1",
+        "accuracy",
+        "latency",
+      ]),
     },
     {
       q: "What trade-offs did you consider in your proposed solution?",
-      keywords: findTermsMatching(combined, ["trade", "balanc", "cost", "complex", "limit", "constraint"]),
+      keywords: findTermsMatching(combined, [
+        "trade",
+        "balanc",
+        "cost",
+        "complex",
+        "limit",
+        "constraint",
+      ]),
     },
     {
       q: "Describe the data processing or preparation steps you mentioned.",
-      keywords: findTermsMatching(combined, ["data", "process", "prepar", "clean", "augment", "pipeline", "curati"]),
+      keywords: findTermsMatching(combined, [
+        "data",
+        "process",
+        "prepar",
+        "clean",
+        "augment",
+        "pipeline",
+        "curati",
+      ]),
     },
     {
       q: "What architecture or framework choices did you make and why?",
-      keywords: findTermsMatching(combined, ["architect", "framework", "model", "layer", "network", "transform"]),
+      keywords: findTermsMatching(combined, [
+        "architect",
+        "framework",
+        "model",
+        "layer",
+        "network",
+        "transform",
+      ]),
     },
     {
       q: "How does your approach handle edge cases or failure scenarios?",
-      keywords: findTermsMatching(combined, ["edge", "fail", "error", "robust", "fallback", "handl"]),
+      keywords: findTermsMatching(combined, [
+        "edge",
+        "fail",
+        "error",
+        "robust",
+        "fallback",
+        "handl",
+      ]),
     },
     {
       q: "What monitoring or observability strategy did you plan for production?",
-      keywords: findTermsMatching(combined, ["monitor", "log", "observ", "alert", "metric", "dashboard"]),
+      keywords: findTermsMatching(combined, [
+        "monitor",
+        "log",
+        "observ",
+        "alert",
+        "metric",
+        "dashboard",
+      ]),
     },
     {
       q: "What was your timeline or phasing strategy for implementing this solution?",
-      keywords: findTermsMatching(combined, ["phase", "timeline", "step", "first", "then", "stage", "sprint"]),
+      keywords: findTermsMatching(combined, [
+        "phase",
+        "timeline",
+        "step",
+        "first",
+        "then",
+        "stage",
+        "sprint",
+      ]),
     },
     {
       q: "What specific tooling, libraries, or services did you mention using?",
-      keywords: findTermsMatching(combined, ["redis", "postgres", "pytorch", "tensorflow", "onnx", "docker", "k8s", "react", "python", "node"]),
+      keywords: findTermsMatching(combined, [
+        "redis",
+        "postgres",
+        "pytorch",
+        "tensorflow",
+        "onnx",
+        "docker",
+        "k8s",
+        "react",
+        "python",
+        "node",
+      ]),
     },
     {
       q: "How did you quantify the expected improvement in your proposal?",
-      keywords: findTermsMatching(combined, ["percent", "improv", "target", "baseline", "expect", "goal"]),
+      keywords: findTermsMatching(combined, [
+        "percent",
+        "improv",
+        "target",
+        "baseline",
+        "expect",
+        "goal",
+      ]),
     },
     {
       q: "What risk mitigation strategies did you include?",
-      keywords: findTermsMatching(combined, ["risk", "mitig", "prevent", "overfit", "fail", "rollback", "safet"]),
+      keywords: findTermsMatching(combined, [
+        "risk",
+        "mitig",
+        "prevent",
+        "overfit",
+        "fail",
+        "rollback",
+        "safet",
+      ]),
     },
   ];
 
@@ -190,11 +324,14 @@ function mockGenerateQuestions(problemDescription, proposalText, count) {
     id: i + 1,
     question: t.q,
     answer: `(Mock answer — based on proposal keywords: ${t.keywords.slice(0, 4).join(", ")})`,
-    keywords: t.keywords.length > 0 ? t.keywords : ["approach", "method", "solution"],
+    keywords:
+      t.keywords.length > 0 ? t.keywords : ["approach", "method", "solution"],
   }));
 
   // Console.log answers for debugging
-  console.log("\n🧪 [grokService:mock] Generated quiz answers (for debugging):");
+  console.log(
+    "\n🧪 [grokService:mock] Generated quiz answers (for debugging):",
+  );
   questions.forEach((q) => {
     console.log(`  Q${q.id}: ${q.question}`);
     console.log(`   → Keywords: [${q.keywords.join(", ")}]`);
@@ -207,16 +344,65 @@ function mockGenerateQuestions(problemDescription, proposalText, count) {
 
 function extractTechnicalTerms(text) {
   const techWords = [
-    "dropout", "l2", "regularization", "adam", "sgd", "learning rate", "batch",
-    "epoch", "transformer", "attention", "convolution", "lstm", "embedding",
-    "fine-tune", "freeze", "quantization", "pruning", "distillation", "onnx",
-    "smote", "oversampling", "augmentation", "f1", "precision", "recall",
-    "auc", "roc", "k-fold", "cross-validation", "stratified", "holdout",
-    "redis", "caching", "postgres", "index", "query", "async", "microservice",
-    "docker", "kubernetes", "ci/cd", "pipeline", "deployment", "monitoring",
-    "latency", "throughput", "p99", "optimization", "refactoring",
-    "lighthouse", "bundle", "code splitting", "lazy loading", "ssr",
-    "rlhf", "dpo", "benchmark", "inference", "training",
+    "dropout",
+    "l2",
+    "regularization",
+    "adam",
+    "sgd",
+    "learning rate",
+    "batch",
+    "epoch",
+    "transformer",
+    "attention",
+    "convolution",
+    "lstm",
+    "embedding",
+    "fine-tune",
+    "freeze",
+    "quantization",
+    "pruning",
+    "distillation",
+    "onnx",
+    "smote",
+    "oversampling",
+    "augmentation",
+    "f1",
+    "precision",
+    "recall",
+    "auc",
+    "roc",
+    "k-fold",
+    "cross-validation",
+    "stratified",
+    "holdout",
+    "redis",
+    "caching",
+    "postgres",
+    "index",
+    "query",
+    "async",
+    "microservice",
+    "docker",
+    "kubernetes",
+    "ci/cd",
+    "pipeline",
+    "deployment",
+    "monitoring",
+    "latency",
+    "throughput",
+    "p99",
+    "optimization",
+    "refactoring",
+    "lighthouse",
+    "bundle",
+    "code splitting",
+    "lazy loading",
+    "ssr",
+    "rlhf",
+    "dpo",
+    "benchmark",
+    "inference",
+    "training",
   ];
 
   return techWords.filter((term) => text.includes(term));
