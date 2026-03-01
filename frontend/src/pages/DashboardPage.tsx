@@ -203,7 +203,8 @@ const difficultyLabel: Record<Difficulty, string> = {
   hard: "Hard",
 };
 
-<<<<<<< HEAD
+type Tab = "tasks" | "issues";
+
 /** Convert a backend Challenge into a Problem row for the table */
 function challengeToProblem(c: Challenge): Problem {
   const verticalMap: Record<BackendVertical, Vertical> = {
@@ -217,21 +218,18 @@ function challengeToProblem(c: Challenge): Problem {
     vertical: verticalMap[c.vertical] ?? "backend",
     company: c.postedBy?.name ?? "Open Source",
     companyLogo: (c.postedBy?.name ?? "OS").slice(0, 2).toUpperCase(),
-    kpiMetric: `${c.baselineValue} → ${c.targetValue}`,
+    kpiMetric: `${c.baselineValue} \u2192 ${c.targetValue}`,
     difficulty: c.difficulty,
     progress: 0,
     isFromBackend: true,
   };
 }
-=======
-type Tab = "tasks" | "issues";
->>>>>>> karthik_new_workplace
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, logout, loading: authLoading } = useAuth();
   const [search, setSearch] = useState("");
-<<<<<<< HEAD
+  const [activeTab, setActiveTab] = useState<Tab>("tasks");
   const [problems, setProblems] = useState<Problem[]>(mockProblems);
   const [apiLoaded, setApiLoaded] = useState(false);
 
@@ -241,19 +239,14 @@ export default function DashboardPage() {
       .then((challenges) => {
         if (challenges && challenges.length > 0) {
           const backendProblems = challenges.map(challengeToProblem);
-          // Merge: backend challenges first, then mocks as demos
           setProblems([...backendProblems, ...mockProblems]);
         }
         setApiLoaded(true);
       })
       .catch(() => {
-        // Backend unreachable — use mock data only
         setApiLoaded(true);
       });
   }, []);
-=======
-  const [activeTab, setActiveTab] = useState<Tab>("tasks");
->>>>>>> karthik_new_workplace
 
   const filteredProblems = problems.filter(
     (p) =>
