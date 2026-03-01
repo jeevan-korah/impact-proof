@@ -296,7 +296,10 @@ export default function DashboardPage() {
             {/* Toggle */}
             <div className="flex items-center bg-surface-card border border-surface-border rounded-lg p-1 gap-1">
               <button
-                onClick={() => { setActiveTab("tasks"); setSearch(""); }}
+                onClick={() => {
+                  setActiveTab("tasks");
+                  setSearch("");
+                }}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                   activeTab === "tasks"
                     ? "bg-accent text-white"
@@ -306,7 +309,10 @@ export default function DashboardPage() {
                 Open Tasks
               </button>
               <button
-                onClick={() => { setActiveTab("issues"); setSearch(""); }}
+                onClick={() => {
+                  setActiveTab("issues");
+                  setSearch("");
+                }}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                   activeTab === "issues"
                     ? "bg-accent text-white"
@@ -339,7 +345,14 @@ export default function DashboardPage() {
               />
             </div>
             <button className="p-2 rounded-lg border border-surface-border hover:bg-surface-hover text-gray-400">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <rect x="3" y="3" width="7" height="7" />
                 <rect x="14" y="3" width="7" height="7" />
                 <rect x="3" y="14" width="7" height="7" />
@@ -347,7 +360,14 @@ export default function DashboardPage() {
               </svg>
             </button>
             <button className="p-2 rounded-lg border border-surface-border hover:bg-surface-hover text-gray-400">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <path d="M3 9h18" />
                 <path d="M9 21V9" />
@@ -375,9 +395,13 @@ export default function DashboardPage() {
                 onClick={() => handleProblemClick(problem)}
                 className="grid grid-cols-[60px_1fr_180px_160px_100px] gap-4 px-5 py-4 border-b border-surface-border/50 hover:bg-surface-hover cursor-pointer transition-colors group"
               >
-                <span className="text-sm text-gray-500 font-mono">{idx + 1}.</span>
+                <span className="text-sm text-gray-500 font-mono">
+                  {idx + 1}.
+                </span>
                 <div className="flex items-center gap-3">
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${verticalColor[problem.vertical]} text-white leading-none`}>
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${verticalColor[problem.vertical]} text-white leading-none`}
+                  >
                     {verticalLabel[problem.vertical]}
                   </span>
                   <span className="text-sm text-gray-200 group-hover:text-white transition-colors">
@@ -388,16 +412,25 @@ export default function DashboardPage() {
                   <div className="w-6 h-6 rounded bg-surface border border-surface-border flex items-center justify-center text-[10px] font-bold text-gray-400">
                     {problem.companyLogo}
                   </div>
-                  <span className="text-sm text-gray-400">{problem.company}</span>
+                  <span className="text-sm text-gray-400">
+                    {problem.company}
+                  </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-400">{problem.kpiMetric}</span>
+                  <span className="text-sm text-gray-400">
+                    {problem.kpiMetric}
+                  </span>
                   <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden max-w-[60px]">
-                    <div className="h-full bg-accent rounded-full" style={{ width: `${problem.progress}%` }} />
+                    <div
+                      className="h-full bg-accent rounded-full"
+                      style={{ width: `${problem.progress}%` }}
+                    />
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`text-sm font-medium ${difficultyColor[problem.difficulty]}`}>
+                  <span
+                    className={`text-sm font-medium ${difficultyColor[problem.difficulty]}`}
+                  >
                     {difficultyLabel[problem.difficulty]}
                   </span>
                 </div>
@@ -412,9 +445,13 @@ export default function DashboardPage() {
                 onClick={() => navigate(issue.route)}
                 className="grid grid-cols-[60px_1fr_180px_160px_100px] gap-4 px-5 py-4 border-b border-surface-border/50 hover:bg-surface-hover cursor-pointer transition-colors group"
               >
-                <span className="text-sm text-gray-500 font-mono">{idx + 1}.</span>
+                <span className="text-sm text-gray-500 font-mono">
+                  {idx + 1}.
+                </span>
                 <div className="flex items-center gap-3">
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${issue.tagColor} text-white leading-none`}>
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${issue.tagColor} text-white leading-none`}
+                  >
                     {issue.tag}
                   </span>
                   <span className="text-sm text-gray-200 group-hover:text-white transition-colors">
@@ -428,13 +465,20 @@ export default function DashboardPage() {
                   <span className="text-sm text-gray-400">{issue.company}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-400">{issue.kpiMetric}</span>
+                  <span className="text-sm text-gray-400">
+                    {issue.kpiMetric}
+                  </span>
                   <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden max-w-[60px]">
-                    <div className="h-full bg-accent rounded-full" style={{ width: `${issue.progress}%` }} />
+                    <div
+                      className="h-full bg-accent rounded-full"
+                      style={{ width: `${issue.progress}%` }}
+                    />
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`text-sm font-medium ${difficultyColor[issue.difficulty]}`}>
+                  <span
+                    className={`text-sm font-medium ${difficultyColor[issue.difficulty]}`}
+                  >
                     {difficultyLabel[issue.difficulty]}
                   </span>
                 </div>

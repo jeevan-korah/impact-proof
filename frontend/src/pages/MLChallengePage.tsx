@@ -1,5 +1,5 @@
 ﻿import { useNavigate, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getChallengeById } from "@/api/challenges.api";
 import { createProposal } from "@/api/proposals.api";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,11 +17,12 @@ export default function MLChallengePage() {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [phase, setPhase] = useState<Phase>("register");
 
-  // Proposal state
-  const [proposalText, setProposalText] = useState("");
+  // Proposal file state
+  const [proposalFile, setProposalFile] = useState<File | null>(null);
   const [proposalResult, setProposalResult] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Upload state
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
@@ -43,12 +44,37 @@ export default function MLChallengePage() {
   const baselineValue = challenge?.baselineValue ?? 78;
 
   // Handlers
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.name.endsWith(".txt") && file.type !== "text/plain") {
+        setSubmitMsg("Only .txt files are accepted");
+        return;
+      }
+      setProposalFile(file);
+      setSubmitMsg(null);
+    }
+  };
+
+  const handleDropFile = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      if (!file.name.endsWith(".txt") && file.type !== "text/plain") {
+        setSubmitMsg("Only .txt files are accepted");
+        return;
+      }
+      setProposalFile(file);
+      setSubmitMsg(null);
+    }
+  };
+
   const handleProposalSubmit = async () => {
-    if (!id || !proposalText.trim()) return;
+    if (!id || !proposalFile) return;
     setSubmitting(true);
     setSubmitMsg(null);
     try {
-      const result = await createProposal({ challengeId: id, proposalText: proposalText.trim() });
+      const result = await createProposal({ challengeId: id, proposalFile });
       setProposalResult(result);
       if (result.decision === "APPROVED") {
         setSubmitMsg("Proposal APPROVED (" + result.percentage + "%)");
@@ -228,11 +254,45 @@ export default function MLChallengePage() {
             {phase === "proposal" && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-base font-semibold text-white mb-1">Submit Your Proposal</h3>
-                  <p className="text-xs text-gray-500">Describe your approach. It will be evaluated against the checklist.{challenge?.threshold && <span className="text-gray-400"> Need &ge;{challenge.threshold}% to pass.</span>}</p>
+                  <h3 className="text-base font-semibold text-white mb-1">Upload Your Proposal</h3>
+                  <p className="text-xs text-gray-500">Upload a <span className="text-gray-300">.txt</span> file containing your proposal and code. It will be evaluated against the checklist.{challenge?.threshold && <span className="text-gray-400"> Need &ge;{challenge.threshold}% to pass.</span>}</p>
                 </div>
-                <textarea value={proposalText} onChange={(e) => setProposalText(e.target.value)} placeholder="Describe your approach, techniques, methodology, and how you plan to meet each checklist requirement..." rows={12} className="w-full bg-[#111] border border-[#222] rounded-lg p-4 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-emerald-600/40 resize-none font-mono" />
-                <button onClick={handleProposalSubmit} disabled={submitting || !proposalText.trim()} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+
+                {/* File dropzone */}
+                <input ref={fileInputRef} type="file" accept=".txt,text/plain" onChange={handleFileSelect} className="hidden" />
+                {!proposalFile ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDropFile}
+                    className="border-2 border-dashed border-[#222] rounded-lg p-12 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-600/30 transition-all group"
+                  >
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-700 group-hover:text-emerald-500 transition-colors mb-3">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="12" y1="18" x2="12" y2="12" />
+                      <polyline points="9 15 12 12 15 15" />
+                    </svg>
+                    <p className="text-sm text-gray-500 group-hover:text-gray-300 transition-colors">Drop your proposal file here or click to browse</p>
+                    <p className="text-xs text-gray-700 mt-1">.txt files only (max 5MB)</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 p-4 bg-[#111] rounded-lg border border-[#222]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white truncate">{proposalFile.name}</p>
+                      <p className="text-xs text-gray-600">{(proposalFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    <button onClick={() => { setProposalFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="text-gray-600 hover:text-red-400 transition-colors" title="Remove file">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    </button>
+                  </div>
+                )}
+
+                <button onClick={handleProposalSubmit} disabled={submitting || !proposalFile} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2">
                   {submitting ? (<><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 11-6.219-8.56" /></svg>Evaluating...</>) : "Submit Proposal"}
                 </button>
                 {/* Result */}

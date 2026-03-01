@@ -1,63 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createSubmission } from "@/api/submissions.api";
-
-const QUIZ_QUESTIONS = [
-  {
-    id: 1,
-    question: "What regularization technique did you apply to prevent overfitting in your model?",
-    keywords: ["dropout", "l2", "l1", "regularization", "weight decay", "early stopping"],
-  },
-  {
-    id: 2,
-    question: "Which optimizer did you use for training, and why is it suited for this task?",
-    keywords: ["adam", "sgd", "adamw", "rmsprop", "optimizer", "learning rate"],
-  },
-  {
-    id: 3,
-    question: "How did you handle class imbalance in the training dataset?",
-    keywords: ["oversampling", "undersampling", "smote", "class weight", "augmentation", "balanced", "focal loss"],
-  },
-  {
-    id: 4,
-    question: "What data augmentation strategies did you employ to improve generalization?",
-    keywords: ["rotation", "flip", "crop", "augmentation", "noise", "mixup", "cutout", "transform"],
-  },
-  {
-    id: 5,
-    question: "Describe the architecture modification you made to the base transformer model.",
-    keywords: ["attention", "head", "layer", "embedding", "pooling", "classification", "fine-tune", "freeze", "transformer"],
-  },
-  {
-    id: 6,
-    question: "What evaluation metric did you prioritize beyond accuracy and why?",
-    keywords: ["f1", "precision", "recall", "auc", "roc", "confusion matrix", "specificity"],
-  },
-  {
-    id: 7,
-    question: "How did you ensure your model meets the inference latency constraint of under 200ms?",
-    keywords: ["quantization", "pruning", "distillation", "onnx", "tensorrt", "batch", "latency", "inference", "optimization"],
-  },
-  {
-    id: 8,
-    question: "What cross-validation strategy did you use to validate model performance?",
-    keywords: ["k-fold", "cross-validation", "stratified", "holdout", "validation", "split", "fold"],
-  },
-  {
-    id: 9,
-    question: "How does your model handle edge cases or out-of-distribution inputs?",
-    keywords: ["threshold", "confidence", "calibration", "ensemble", "rejection", "uncertainty", "softmax"],
-  },
-  {
-    id: 10,
-    question: "What steps ensure reproducibility of your training pipeline?",
-    keywords: ["seed", "random", "deterministic", "reproducib", "checkpoint", "version", "mlflow", "wandb"],
-  },
-];
+import { generateQuizQuestions, type QuizQuestion } from "@/api/proposals.api";
 
 export default function MLQuizPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Dynamic questions from backend
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -69,13 +22,29 @@ export default function MLQuizPage() {
 
   const scanLineRef = useRef<HTMLDivElement>(null);
 
+  // Fetch quiz questions from backend on mount
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    generateQuizQuestions(id)
+      .then((data) => {
+        setQuestions(data.questions);
+        setLoadError(null);
+      })
+      .catch((err) => {
+        console.error("Failed to load quiz questions:", err);
+        setLoadError(err?.response?.data?.error || "Failed to load quiz questions. Make sure your proposal is approved.");
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
   const answeredCount = Object.keys(quizAnswers).filter((k) => quizAnswers[Number(k)]?.trim()).length;
 
   const evaluateQuiz = async () => {
     setQuizSubmitted(true);
     let correct = 0;
-    for (let i = 0; i < QUIZ_QUESTIONS.length; i++) {
-      const q = QUIZ_QUESTIONS[i];
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
       setCheckingQuestion(q.id);
       await new Promise((r) => setTimeout(r, 800 + Math.random() * 600));
       const userAnswer = (quizAnswers[q.id] || "").toLowerCase();
@@ -84,7 +53,7 @@ export default function MLQuizPage() {
       setQuestionResults((prev) => ({ ...prev, [q.id]: pass }));
       setCheckedQuestions((prev) => new Set(prev).add(q.id));
     }
-    const score = Math.round((correct / QUIZ_QUESTIONS.length) * 100);
+    const score = Math.round((correct / questions.length) * 100);
     setQuizScore(score);
     setCheckingQuestion(null);
 
@@ -118,7 +87,7 @@ export default function MLQuizPage() {
             <div className="grid grid-cols-3 gap-4">
               <div><span className="text-gray-600 text-xs block">Correct</span><span className="text-emerald-400 font-mono text-lg">{Object.values(questionResults).filter(Boolean).length}</span></div>
               <div><span className="text-gray-600 text-xs block">Incorrect</span><span className="text-red-400 font-mono text-lg">{Object.values(questionResults).filter((v) => !v).length}</span></div>
-              <div><span className="text-gray-600 text-xs block">Total</span><span className="text-gray-300 font-mono text-lg">{QUIZ_QUESTIONS.length}</span></div>
+              <div><span className="text-gray-600 text-xs block">Total</span><span className="text-gray-300 font-mono text-lg">{questions.length}</span></div>
             </div>
           </div>
           <button onClick={() => navigate("/")} className="mt-6 px-6 py-2.5 bg-[#111] border border-[#222] text-gray-400 rounded-lg text-sm font-medium hover:border-emerald-600/30 hover:text-white transition-all">Return to Dashboard</button>
@@ -144,7 +113,7 @@ export default function MLQuizPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          {!quizSubmitted && <span className="text-xs text-gray-600 font-mono">{answeredCount}/{QUIZ_QUESTIONS.length} answered</span>}
+          {!quizSubmitted && <span className="text-xs text-gray-600 font-mono">{answeredCount}/{questions.length} answered</span>}
           {quizSubmitted && checkingQuestion !== null && (
             <div className="flex items-center gap-2 text-amber-400 text-xs">
               <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 11-6.219-8.56" /></svg>
@@ -155,7 +124,26 @@ export default function MLQuizPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-5">
-        {QUIZ_QUESTIONS.map((q, i) => {
+        {/* Loading state */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <svg className="animate-spin text-emerald-500" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 11-6.219-8.56" /></svg>
+            <p className="text-sm text-gray-400">Generating quiz questions from your proposal...</p>
+            <p className="text-xs text-gray-600">This may take a moment if using the Grok API</p>
+          </div>
+        )}
+
+        {/* Error state */}
+        {!loading && loadError && (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+            <p className="text-sm text-red-400">{loadError}</p>
+            <button onClick={() => navigate("/challenge/ml/" + id)} className="px-4 py-2 bg-[#111] border border-[#222] text-gray-400 rounded-lg text-xs hover:border-emerald-600/30 transition-all">Go back to challenge</button>
+          </div>
+        )}
+
+        {/* Questions */}
+        {!loading && !loadError && questions.map((q, i) => {
           const isChecking = checkingQuestion === q.id;
           const isChecked = checkedQuestions.has(q.id);
           const passed = questionResults[q.id];
@@ -182,8 +170,8 @@ export default function MLQuizPage() {
           );
         })}
 
-        {!quizSubmitted && (
-          <button onClick={evaluateQuiz} disabled={answeredCount < QUIZ_QUESTIONS.length} className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+        {!quizSubmitted && !loading && !loadError && (
+          <button onClick={evaluateQuiz} disabled={answeredCount < questions.length || questions.length === 0} className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4" /><path d="M21 12c0 1.2-.4 2.3-1 3.3-1.6 2.7-4.6 4.7-8 4.7s-6.4-2-8-4.7A9 9 0 0112 3c2 0 3.8.6 5.3 1.7" /></svg>
             Verify with AI Plagiarism Checker
           </button>
