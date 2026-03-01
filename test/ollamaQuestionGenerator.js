@@ -229,7 +229,7 @@ async function generateVerificationQuestions(
   problemStatement,
   dataset,
   proposal,
-  solutionCode
+  solutionCode,
 ) {
   const prompt = `
 You are a senior technical interviewer.
@@ -268,7 +268,7 @@ Return ONLY the questions as a numbered list.
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "llama3",       // change to your installed model name
+      model: "mistral:latest",
       prompt: prompt,
       stream: false,
       temperature: 0.3,
@@ -309,7 +309,7 @@ if (require.main === module) {
         PROBLEM_STATEMENT,
         DATASET,
         PROPOSAL,
-        SOLUTION_CODE
+        SOLUTION_CODE,
       );
 
       console.log("Generated Verification Questions:\n");
