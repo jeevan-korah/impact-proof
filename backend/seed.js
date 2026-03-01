@@ -11,6 +11,23 @@ const prisma = new PrismaClient({ adapter });
 async function seed() {
   console.log("🌱 Seeding database...");
 
+  // Delete existing data in correct order (respecting foreign keys)
+  console.log("🗑️  Removing existing data...");
+
+  const deletedSubmissions = await prisma.submission.deleteMany({});
+  console.log(`   Deleted ${deletedSubmissions.count} submissions`);
+
+  const deletedProposals = await prisma.proposal.deleteMany({});
+  console.log(`   Deleted ${deletedProposals.count} proposals`);
+
+  const deletedChallenges = await prisma.challenge.deleteMany({});
+  console.log(`   Deleted ${deletedChallenges.count} challenges`);
+
+  const deletedProfiles = await prisma.engineerProfile.deleteMany({});
+  console.log(`   Deleted ${deletedProfiles.count} engineer profiles`);
+
+  console.log("✅ Cleanup complete\n");
+
   // Create a company user
   const companyPassword = await bcrypt.hash("password123", 12);
   const company = await prisma.user.upsert({
@@ -171,6 +188,72 @@ async function seed() {
     },
   });
   console.log("✅ Claude Sonnet Challenge created:", claudeChallenge.id);
+
+  // Create Fraud Detection Challenge
+  const fraudChallenge = await prisma.challenge.create({
+    data: {
+      postedById: company.id,
+      title: "Fraud Detection Optimization",
+      description:
+        "Improve the fraud detection model to reduce false positive rate from 12% to under 3% while maintaining 99.5% true positive rate for actual fraud cases.",
+      vertical: "ml",
+      difficulty: "hard",
+      source: "company",
+      baselineValue: 12.0,
+      targetValue: 3.0,
+      comparisonOperator: "<=",
+      checklist: [
+        "Feature engineering approach for transaction patterns is detailed",
+        "Model ensemble strategy is specified",
+        "Imbalanced dataset handling technique is included",
+        "Real-time inference requirements are addressed (under 100ms)",
+        "Precision-recall tradeoff analysis is provided",
+        "Model interpretability for compliance is explained",
+        "A/B testing plan with risk mitigation is defined",
+      ],
+      threshold: 70.0,
+      constraints: {
+        maxFalsePositiveRate: 3.0,
+        minTruePositiveRate: 99.5,
+        maxInferenceLatency: 100,
+      },
+      status: "open",
+    },
+  });
+  console.log("✅ Fraud Detection Challenge created:", fraudChallenge.id);
+
+  // Create Database Query Optimization Challenge
+  const dbChallenge = await prisma.challenge.create({
+    data: {
+      postedById: company.id,
+      title: "Database Query Optimization",
+      description:
+        "Optimize critical database queries to reduce P95 response time from 850ms to under 150ms for the user analytics dashboard.",
+      vertical: "backend",
+      difficulty: "medium",
+      source: "company",
+      baselineValue: 850.0,
+      targetValue: 150.0,
+      comparisonOperator: "<=",
+      checklist: [
+        "Index optimization strategy is detailed",
+        "Query execution plan analysis is included",
+        "Denormalization approach where applicable is specified",
+        "Caching layer design is explained",
+        "Connection pooling configuration is addressed",
+        "Query batching and aggregation strategy is provided",
+        "Performance testing methodology is defined",
+      ],
+      threshold: 70.0,
+      constraints: {
+        maxP95Latency: 150,
+        minCacheHitRate: 80,
+        zeroDataIntegrity: true,
+      },
+      status: "open",
+    },
+  });
+  console.log("✅ Database Query Challenge created:", dbChallenge.id);
 
   console.log("\n🎉 Seeding complete!");
   console.log("\n📝 Test Accounts:");

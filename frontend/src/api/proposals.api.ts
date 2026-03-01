@@ -15,13 +15,45 @@ export interface ProposalEvalResult {
   status: string;
 }
 
+export interface QuizQuestion {
+  id: number;
+  question: string;
+  keywords: string[];
+}
+
+export interface QuizGenerateResult {
+  questions: QuizQuestion[];
+  source: string;
+  total: number;
+}
+
+/**
+ * Submit a proposal as a .txt file upload (multipart/form-data).
+ */
 export async function createProposal(data: {
   challengeId: string;
-  proposalText: string;
+  proposalFile: File;
 }) {
+  const formData = new FormData();
+  formData.append("challengeId", data.challengeId);
+  formData.append("proposalFile", data.proposalFile);
+
   const res = await api.post<ApiResponse<ProposalEvalResult>>(
     "/proposal",
-    data,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+
+  return res.data.data;
+}
+
+/**
+ * Generate quiz questions from the approved proposal + challenge description.
+ */
+export async function generateQuizQuestions(challengeId: string) {
+  const res = await api.post<ApiResponse<QuizGenerateResult>>(
+    "/proposal/quiz/generate",
+    { challengeId },
   );
 
   return res.data.data;

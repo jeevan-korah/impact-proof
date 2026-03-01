@@ -1,0 +1,320 @@
+Proposal: Fraud Detection Model - Reduce False Positives to <3%
+
+OBJECTIVE:
+Improve fraud detection model to reduce false positive rate from 12% to under 3% while maintaining 99.5% detection accuracy for actual fraud cases.
+
+FEATURE ENGINEERING APPROACH FOR TRANSACTION PATTERNS:
+- Time-based features:
+  * Hour of day, day of week patterns
+  * Time since last transaction
+  * Transaction velocity (count in last 1h, 24h, 7d)
+  * Unusual time patterns (3am purchases)
+
+- Amount-based features:
+  * Deviation from user's average transaction
+  * Z-score of transaction amount
+  * Running statistics (mean, std, median)
+  * Ratio to user's historical max/min
+
+- Location-based features:
+  * Distance from previous transaction
+  * IP geolocation mismatch with card location
+  * Velocity impossible (e.g., 1000km in 1 hour)
+  * Known high-risk regions
+
+- Behavioral features:
+  * Merchant category changes
+  * First time merchant/category for user
+  * Device fingerprint matching
+  * Failed authentication attempts
+
+```python
+import pandas as pd
+import numpy as np
+
+def engineer_features(transaction, user_history):
+    features = {}
+    
+    # Velocity features
+    features['tx_count_1h'] = len(user_history.last('1h'))
+    features['tx_count_24h'] = len(user_history.last('24h'))
+    
+    # Amount deviation
+    user_avg = user_history['amount'].mean()
+    features['amount_zscore'] = (transaction['amount'] - user_avg) / user_history['amount'].std()
+    
+    # Location velocity
+    if len(user_history) > 0:
+        last_tx = user_history.iloc[-1]
+        distance = haversine(last_tx['location'], transaction['location'])
+        time_diff = (transaction['timestamp'] - last_tx['timestamp']).seconds / 3600
+        features['location_velocity'] = distance / max(time_diff, 0.1)
+    
+    # Pattern detection
+    features['is_unusual_hour'] = transaction['hour'] in [0, 1, 2, 3, 4, 5]
+    features['is_new_merchant'] = transaction['merchant_id'] not in user_history['merchant_id'].unique()
+    
+    return features
+```
+
+MODEL ENSEMBLE STRATEGY:
+- Ensemble of 5 diverse models:
+  1. XGBoost (tree-based, strong baseline)
+  2. LightGBM (fast, handle categorical features)
+  3. Neural Network (deep patterns)
+  4. Isolation Forest (anomaly detection)
+  5. AutoEncoder (reconstruction error)
+
+- Voting strategy: Weighted average
+  * XGBoost: 30% weight
+  * LightGBM: 25% weight
+  * Neural Net: 20% weight
+  * Isolation Forest: 15% weight
+  * AutoEncoder: 10% weight
+
+- Stacking meta-learner: Logistic Regression on predictions
+
+```python
+from sklearn.ensemble import VotingClassifier
+import xgboost as xgb
+import lightgbm as lgb
+from sklearn.neural_network import MLPClassifier
+
+# Base models
+xgb_model = xgb.XGBClassifier(objective='binary:logistic', eval_metric='auc')
+lgb_model = lgb.LGBMClassifier(objective='binary', metric='auc')
+nn_model = MLPClassifier(hidden_layers=(128, 64, 32), activation='relu')
+
+# Ensemble
+ensemble = VotingClassifier(
+    estimators=[
+        ('xgb', xgb_model),
+        ('lgb', lgb_model),
+        ('nn', nn_model)
+    ],
+    voting='soft',
+    weights=[0.3, 0.25, 0.2]
+)
+
+ensemble.fit(X_train, y_train)
+```
+
+IMBALANCED DATASET HANDLING TECHNIQUE:
+- Current dataset: 99.5% legitimate, 0.5% fraud
+- Techniques:
+  * SMOTE (Synthetic Minority Over-sampling) for fraud class
+  * Random under-sampling of legitimate class
+  * Class weights in loss function
+  * Focal loss to focus on hard examples
+  * Stratified K-fold cross-validation
+
+```python
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.pipeline import Pipeline
+
+# Combined sampling strategy
+sampling_pipeline = Pipeline([
+    ('over', SMOTE(sampling_strategy=0.1)),
+    ('under', RandomUnderSampler(sampling_strategy=0.5))
+])
+
+X_resampled, y_resampled = sampling_pipeline.fit_resample(X_train, y_train)
+
+# Focal loss for neural network
+import torch.nn as nn
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=0.25, gamma=2):
+        super().__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+    
+    def forward(self, inputs, targets):
+        bce_loss = nn.BCEWithLogitsLoss(reduction='none')(inputs, targets)
+        pt = torch.exp(-bce_loss)
+        focal_loss = self.alpha * (1 - pt) ** self.gamma * bce_loss
+        return focal_loss.mean()
+```
+
+REAL-TIME INFERENCE REQUIREMENTS (UNDER 100MS):
+- Current latency: ~250ms
+- Target latency: <100ms (constraint specified)
+- Optimizations:
+  * Feature caching (Redis) - 30ms savings
+  * Model quantization (INT8) - 40ms savings
+  * Precomputed aggregations - 20ms savings
+  * Parallel feature computation - 15ms savings
+  * C++ inference engine (ONNX Runtime) - 25ms savings
+  * Database query optimization - 20ms savings
+
+```python
+import onnxruntime as ort
+import numpy as np
+
+# Convert model to ONNX for fast inference
+ort_session = ort.InferenceSession("fraud_model.onnx")
+
+async def predict_fraud(transaction):
+    # Parallel feature engineering
+    features = await asyncio.gather(
+        get_velocity_features(transaction),
+        get_amount_features(transaction),
+        get_location_features(transaction)
+    )
+    
+    # Fast inference
+    input_data = np.array([features]).astype(np.float32)
+    outputs = ort_session.run(None, {'input': input_data})
+    
+    fraud_probability = outputs[0][0][1]
+    return fraud_probability
+```
+
+PRECISION-RECALL TRADEOFF ANALYSIS:
+- Current operating point:
+  * Precision: 30% (70% false positive rate = 100% - 30%)
+  * Recall: 99.8% (detection rate)
+
+- Target operating point:
+  * Precision: 97% (3% false positive rate)
+  * Recall: ≥99.5% (maintain detection accuracy)
+
+- Strategy:
+  * Adjust decision threshold from 0.5 to 0.85
+  * Use precision-recall curve to find optimal threshold
+  * Business cost function: Cost(FP) = $5, Cost(FN) = $500
+  * Optimize F-beta score (β=10 to weight recall higher)
+
+```python
+from sklearn.metrics import precision_recall_curve
+import matplotlib.pyplot as plt
+
+# Find optimal threshold
+precisions, recalls, thresholds = precision_recall_curve(y_true, y_probs)
+
+# Calculate F-beta score for each threshold
+beta = 10  # Weight recall 10x more than precision
+f_beta_scores = (1 + beta**2) * (precisions * recalls) / (beta**2 * precisions + recalls)
+
+optimal_idx = np.argmax(f_beta_scores)
+optimal_threshold = thresholds[optimal_idx]
+
+print(f"Optimal threshold: {optimal_threshold:.3f}")
+print(f"Precision: {precisions[optimal_idx]:.1%}")
+print(f"Recall: {recalls[optimal_idx]:.1%}")
+```
+
+MODEL INTERPRETABILITY FOR COMPLIANCE:
+- Regulatory requirements: Explain fraud decisions
+- Techniques implemented:
+  * SHAP (SHapley Additive exPlanations) values
+  * LIME (Local Interpretable Model-agnostic Explanations)
+  * Feature importance from tree models
+  * Attention weights from neural network
+  * Rule extraction for top fraud patterns
+
+```python
+import shap
+
+# SHAP explainer
+explainer = shap.TreeExplainer(xgb_model)
+shap_values = explainer.shap_values(transaction_features)
+
+# Generate explanation
+def explain_fraud_decision(transaction, shap_values):
+    explanation = {
+        'decision': 'FRAUD' if prediction > threshold else 'LEGITIMATE',
+        'confidence': float(prediction),
+        'top_reasons': []
+    }
+    
+    # Get top 5 contributing features
+    feature_contributions = list(zip(feature_names, shap_values))
+    feature_contributions.sort(key=lambda x: abs(x[1]), reverse=True)
+    
+    for feature, contribution in feature_contributions[:5]:
+        explanation['top_reasons'].append({
+            'feature': feature,
+            'value': transaction[feature],
+            'impact': float(contribution)
+        })
+    
+    return explanation
+```
+
+A/B TESTING PLAN WITH RISK MITIGATION:
+- Phase 1 (Week 1-2): Shadow mode
+  * New model runs in parallel
+  * No actual decisions made
+  * Compare predictions with current model
+  * Alert if major discrepancies (>5%)
+
+- Phase 2 (Week 3): Canary deployment
+  * Route 5% of traffic to new model
+  * Monitor false positive rate in real-time
+  * Automatic rollback if FP > 4%
+  * Manual review of all flagged transactions
+
+- Phase 3 (Week 4-5): Gradual rollout
+  * Increase to 25%, then 50%, then 100%
+  * Daily reports to risk team
+  * Customer feedback monitoring
+  * Financial impact tracking
+
+Risk mitigation:
+- Human review queue for borderline cases (0.75 < score < 0.85)
+- Instant rollback capability
+- Fraud insurance for missed fraud cases
+- Customer notification for false positives
+
+```python
+class ABTestManager:
+    def __init__(self):
+        self.rollout_percentage = 0.05  # Start with 5%
+        self.metrics = defaultdict(list)
+    
+    async def route_prediction(self, transaction):
+        if random.random() < self.rollout_percentage:
+            # New model
+            prediction = await new_model.predict(transaction)
+            self.metrics['new_model'].append({
+                'timestamp': datetime.now(),
+                'prediction': prediction,
+                'actual': transaction.get('actual_label')
+            })
+        else:
+            # Current model
+            prediction = await current_model.predict(transaction)
+            self.metrics['current_model'].append({
+                'timestamp': datetime.now(),
+                'prediction': prediction,
+                'actual': transaction.get('actual_label')
+            })
+        
+        return prediction
+    
+    def evaluate_metrics(self):
+        # Calculate false positive rate
+        new_fp_rate = self.calculate_fp_rate(self.metrics['new_model'])
+        
+        if new_fp_rate > 0.04:  # Above 4% threshold
+            self.rollback()
+        elif new_fp_rate < 0.035 and len(self.metrics['new_model']) > 10000:
+            # Good performance, increase rollout
+            self.rollout_percentage = min(1.0, self.rollout_percentage * 2)
+```
+
+EXPECTED RESULTS:
+- False positive rate: 2.8% (below 3% target)
+- True positive rate: 99.6% (above 99.5% target)
+- Inference latency: 85ms (below 100ms target)
+- Cost savings: $2M annually from reduced false positives
+- Customer satisfaction increase: +15%
+
+MONITORING AND ALERTS:
+- Real-time dashboards: FP rate, TP rate, latency
+- Daily model performance reports
+- Concept drift detection
+- Alert if FP > 3.5% or TP < 99%
+- Weekly retraining with new data

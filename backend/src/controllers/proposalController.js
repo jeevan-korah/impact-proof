@@ -1,13 +1,28 @@
 import { evaluateProposal } from "../services/llmService.js";
+import { generateQuizQuestions } from "../services/grokService.js";
 import { prisma } from "../lib/prisma.js";
 
 // ── POST / — Engineer only (enforced at route level) ─────────────────────
+// Now accepts multipart/form-data with a .txt file OR JSON body with proposalText
 export async function evaluate(req, res) {
   const engineerId = req.user.userId;
-  const { challengeId, proposalText } = req.body;
 
-  if (!proposalText) {
-    return res.status(400).json({ error: "proposalText is required" });
+  // Support both file upload and JSON text
+  let proposalText = req.body.proposalText || "";
+  const challengeId = req.body.challengeId;
+
+  // If a file was uploaded via multer, read its content
+  if (req.file) {
+    proposalText = req.file.buffer.toString("utf-8");
+  }
+
+  if (!proposalText || !proposalText.trim()) {
+    return res
+      .status(400)
+      .json({
+        error:
+          "proposalText is required (either in body or uploaded as .txt file)",
+      });
   }
   if (!challengeId) {
     return res.status(400).json({ error: "challengeId is required" });
@@ -46,11 +61,9 @@ export async function evaluate(req, res) {
     });
 
     if (existing) {
-      return res
-        .status(409)
-        .json({
-          error: "You have already submitted a proposal for this challenge",
-        });
+      return res.status(409).json({
+        error: "You have already submitted a proposal for this challenge",
+      });
     }
 
     // 3. Run evaluation via Ollama using company's checklist + threshold
@@ -187,5 +200,86 @@ export async function getProposalsForChallenge(req, res) {
     return res.status(200).json({ success: true, data: { proposals } });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// ── POST /quiz/generate — Generate quiz questions from problem + proposal ──
+// Expects: { challengeId } — looks up the engineer's approved proposal
+export async function generateQuiz(req, res) {
+  const engineerId = req.user.userId;
+  const { challengeId } = req.body;
+
+  if (!challengeId) {
+    return res.status(400).json({ error: "challengeId is required" });
+  }
+
+  try {
+    // 1. Get the challenge description
+    const challenge = await prisma.challenge.findUnique({
+      where: { id: challengeId },
+      select: { id: true, title: true, description: true },
+    });
+
+    if (!challenge) {
+      return res.status(404).json({ error: "Challenge not found" });
+    }
+
+    // 2. Get the engineer's approved proposal for this challenge
+    const proposal = await prisma.proposal.findUnique({
+      where: {
+        challengeId_engineerId: {
+          challengeId,
+          engineerId,
+        },
+      },
+      select: { proposalText: true, decision: true },
+    });
+
+    if (!proposal) {
+      return res
+        .status(404)
+        .json({
+          error:
+            "No proposal found for this challenge. Submit a proposal first.",
+        });
+    }
+
+    if (proposal.decision !== "APPROVED") {
+      return res
+        .status(400)
+        .json({
+          error: "Your proposal must be approved before taking the quiz.",
+        });
+    }
+
+    // 3. Generate questions via Grok (or mock fallback)
+    const problemDescription = `${challenge.title}\n\n${challenge.description}`;
+    const result = await generateQuizQuestions({
+      problemDescription,
+      proposalText: proposal.proposalText,
+      count: 10,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        questions: result.questions.map((q) => ({
+          id: q.id,
+          question: q.question,
+          // Send keywords to frontend for client-side checking (same flow as before)
+          keywords: q.keywords,
+        })),
+        source: result.source,
+        total: result.questions.length,
+      },
+    });
+  } catch (error) {
+    console.error("[generateQuiz] error:", error);
+    return res
+      .status(500)
+      .json({
+        error: "Failed to generate quiz questions",
+        details: error.message,
+      });
   }
 }
