@@ -17,7 +17,7 @@ const GROQ_MODEL = "llama-3.3-70b-versatile";
 export async function generateQuizQuestions({
   problemDescription,
   proposalText,
-  count = 10,
+  count = 4,
 }) {
   const apiKey = process.env.GROQ_API_KEY;
 
@@ -45,14 +45,15 @@ export async function generateQuizQuestions({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           model: GROQ_MODEL,
           messages: [
             {
               role: "system",
-              content: "You are a technical interview question generator. You MUST respond with valid JSON only, no markdown, no extra text.",
+              content:
+                "You are a technical interview question generator. You MUST respond with valid JSON only, no markdown, no extra text.",
             },
             {
               role: "user",
@@ -77,11 +78,7 @@ export async function generateQuizQuestions({
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error(
-        "[groqService] Groq API error:",
-        response.status,
-        errText,
-      );
+      console.error("[groqService] Groq API error:", response.status, errText);
       throw new Error(`Groq API returned ${response.status}`);
     }
 

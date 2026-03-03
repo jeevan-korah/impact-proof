@@ -17,12 +17,10 @@ export async function evaluate(req, res) {
   }
 
   if (!proposalText || !proposalText.trim()) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "proposalText is required (either in body or uploaded as .txt file)",
-      });
+    return res.status(400).json({
+      error:
+        "proposalText is required (either in body or uploaded as .txt file)",
+    });
   }
   if (!challengeId) {
     return res.status(400).json({ error: "challengeId is required" });
@@ -236,20 +234,15 @@ export async function generateQuiz(req, res) {
     });
 
     if (!proposal) {
-      return res
-        .status(404)
-        .json({
-          error:
-            "No proposal found for this challenge. Submit a proposal first.",
-        });
+      return res.status(404).json({
+        error: "No proposal found for this challenge. Submit a proposal first.",
+      });
     }
 
     if (proposal.decision !== "APPROVED") {
-      return res
-        .status(400)
-        .json({
-          error: "Your proposal must be approved before taking the quiz.",
-        });
+      return res.status(400).json({
+        error: "Your proposal must be approved before taking the quiz.",
+      });
     }
 
     // 3. Generate questions via Grok (or mock fallback)
@@ -257,7 +250,7 @@ export async function generateQuiz(req, res) {
     const result = await generateQuizQuestions({
       problemDescription,
       proposalText: proposal.proposalText,
-      count: 10,
+      count: 4,
     });
 
     return res.status(200).json({
@@ -275,11 +268,9 @@ export async function generateQuiz(req, res) {
     });
   } catch (error) {
     console.error("[generateQuiz] error:", error);
-    return res
-      .status(500)
-      .json({
-        error: "Failed to generate quiz questions",
-        details: error.message,
-      });
+    return res.status(500).json({
+      error: "Failed to generate quiz questions",
+      details: error.message,
+    });
   }
 }
